@@ -1,0 +1,66 @@
+[
+  {
+    "id": "rec-1001",
+    "title": "Customer Profile Sync",
+    "status": "Active",
+    "owner": "Platform Operations",
+    "category": "Customer Data",
+    "createdAt": "2026-03-18T09:30:00Z",
+    "updatedAt": "2026-03-20T12:00:00Z",
+    "summary": "Synchronizes customer profile updates from CRM into the enterprise customer data hub.",
+    "currentPayload": {
+      "sourceSystem": "Dynamics 365",
+      "targetSystem": "Customer Data Hub",
+      "syncMode": "Near real-time",
+      "priority": "High"
+    }
+  },
+  {
+    "id": "rec-1002",
+    "title": "Invoice Export Batch",
+    "status": "Draft",
+    "owner": "Finance Integrations",
+    "category": "Billing",
+    "createdAt": "2026-03-12T14:10:00Z",
+    "updatedAt": "2026-03-19T16:45:00Z",
+    "summary": "Exports approved invoices from ERP to the external billing partner on a scheduled cadence.",
+    "currentPayload": {
+      "sourceSystem": "SAP S/4HANA",
+      "targetSystem": "Billing Partner API",
+      "schedule": "0 0/30 * * * ?",
+      "fileFormat": "JSON"
+    }
+  },
+  {
+    "id": "rec-1003",
+    "title": "Workforce Directory Provisioning",
+    "status": "Active",
+    "owner": "Identity Services",
+    "category": "Identity",
+    "createdAt": "2026-02-28T08:00:00Z",
+    "updatedAt": "2026-03-20T08:22:00Z",
+    "summary": "Provisions workforce directory updates to downstream SaaS applications.",
+    "currentPayload": {
+      "sourceSystem": "Workday",
+      "targetSystem": "Azure AD",
+      "provisioningMode": "Event-driven",
+      "requiresApproval": false
+    }
+  },
+  {
+    "id": "rec-1004",
+    "title": "Claims Intake Normalization",
+    "status": "Archived",
+    "owner": "Claims Automation",
+    "category": "Operations",
+    "createdAt": "2025-12-05T11:20:00Z",
+    "updatedAt": "2026-03-01T18:05:00Z",
+    "summary": "Normalizes inbound claims payloads before dispatching them to case management services.",
+    "currentPayload": {
+      "sourceSystem": "Claims Portal",
+      "targetSystem": "Case Management API",
+      "transformationVersion": "v2.4",
+      "retentionDays": 90
+    }
+  }
+]
