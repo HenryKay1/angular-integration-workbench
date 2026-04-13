@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map, shareReplay } from 'rxjs';
+import { Observable, delay, map, of, shareReplay } from 'rxjs';
 import { RecordHistoryEntry } from '../models/record-history-entry.model';
 import { RecordItem } from '../models/record.model';
 
@@ -20,8 +20,25 @@ export class RecordService {
     .get<RecordHistoryEntry[]>(this.historyUrl)
     .pipe(shareReplay(1));
 
+  listRecords(): Observable<RecordItem[]> {
+    const SIMULATE_DELAY = true;
+    const SIMULATE_EMPTY = false;
+
+    let data$ = this.records$;
+
+    if (SIMULATE_EMPTY) {
+      data$ = of([]);
+    }
+
+    if (SIMULATE_DELAY) {
+      data$ = data$.pipe(delay(1000));
+    }
+
+  return data$;  
+}
+
   getRecords(): Observable<RecordItem[]> {
-    return this.records$;
+    return this.listRecords();
   }
 
   getRecordById(id: string): Observable<RecordItem | undefined> {

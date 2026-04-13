@@ -2,3 +2,6 @@ node_modules/
 .angular/
 dist/
 .vscode/
+notes.txt
+.codex-design-doc/
+.codex-design-doc.zip
