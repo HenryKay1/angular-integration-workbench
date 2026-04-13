@@ -1,4 +1,4 @@
-import { AsyncPipe, NgIf } from '@angular/common';
+import { AsyncPipe, JsonPipe, NgIf } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { map, startWith } from 'rxjs';
 import { RecordItem } from '../../../core/models/record.model';
@@ -12,7 +12,7 @@ import {
 @Component({
   selector: 'aiw-record-list-page',
   standalone: true,
-  imports: [AsyncPipe, NgIf, DataViewComponent],
+  imports: [AsyncPipe, JsonPipe, NgIf, DataViewComponent],
   template: `
     <section class="records-page" *ngIf="viewModel$ | async as viewModel">
       <div class="records-page__header">
@@ -35,10 +35,51 @@ import {
         [searchFields]="searchFields"
         [itemLink]="recordLink"
         [isLoading]="viewModel.isLoading"
+        [detailTemplate]="recordDetailTemplate"
+        initialSortColumn="Updated"
+        initialSortDirection="desc"
         searchPlaceholder="Search by title, owner, category, or status"
         emptyMessage="No records are available."
         noResultsMessage="No records match the current search."
       />
+
+      <ng-template #recordDetailTemplate let-record let-mode="mode">
+        <section class="record-preview">
+          <div class="record-preview__header">
+            <div>
+              <p class="record-preview__eyebrow">{{ mode === 'grid' ? 'Quick preview' : 'Inline detail' }}</p>
+              <h4>{{ record.title }}</h4>
+            </div>
+            <span class="record-preview__status">{{ record.status }}</span>
+          </div>
+
+          <p class="record-preview__summary">{{ record.summary }}</p>
+
+          <dl class="record-preview__meta">
+            <div>
+              <dt>Owner</dt>
+              <dd>{{ record.owner }}</dd>
+            </div>
+            <div>
+              <dt>Category</dt>
+              <dd>{{ record.category }}</dd>
+            </div>
+            <div>
+              <dt>Created</dt>
+              <dd>{{ formatDate(record.createdAt) }}</dd>
+            </div>
+            <div>
+              <dt>Updated</dt>
+              <dd>{{ formatDate(record.updatedAt) }}</dd>
+            </div>
+          </dl>
+
+          <div class="record-preview__payload">
+            <h5>Current payload</h5>
+            <pre>{{ record.currentPayload | json }}</pre>
+          </div>
+        </section>
+      </ng-template>
     </section>
   `,
   styles: [`
@@ -65,6 +106,83 @@ import {
     .records-page__count {
       color: #52606d;
     }
+
+    .record-preview {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .record-preview__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 1rem;
+    }
+
+    .record-preview__header h4,
+    .record-preview__summary,
+    .record-preview__payload h5 {
+      margin: 0;
+    }
+
+    .record-preview__eyebrow {
+      margin: 0 0 0.4rem;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #7b8794;
+    }
+
+    .record-preview__status {
+      padding: 0.4rem 0.75rem;
+      border-radius: 999px;
+      background: #d9e2ec;
+      color: #102a43;
+      font-weight: 700;
+    }
+
+    .record-preview__summary {
+      color: #52606d;
+    }
+
+    .record-preview__meta {
+      display: grid;
+      gap: 0.9rem;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      margin: 0;
+    }
+
+    .record-preview__meta div {
+      display: grid;
+      gap: 0.2rem;
+    }
+
+    .record-preview__meta dt {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #7b8794;
+    }
+
+    .record-preview__meta dd {
+      margin: 0;
+      color: #1f2933;
+    }
+
+    .record-preview__payload {
+      display: grid;
+      gap: 0.6rem;
+    }
+
+    .record-preview__payload pre {
+      margin: 0;
+      padding: 1rem;
+      overflow: auto;
+      border-radius: 0.75rem;
+      background: #102a43;
+      color: #f0f4f8;
+      font-size: 0.85rem;
+    }
   `]
 })
 export class RecordListPageComponent {
@@ -76,11 +194,32 @@ export class RecordListPageComponent {
   );
 
   protected readonly columns: DataViewColumn<RecordItem>[] = [
-    { header: 'Title', value: (record) => record.title },
-    { header: 'Status', value: (record) => record.status },
-    { header: 'Owner', value: (record) => record.owner },
-    { header: 'Category', value: (record) => record.category },
-    { header: 'Updated', value: (record) => this.formatDate(record.updatedAt) }
+    {
+      header: 'Title',
+      value: (record) => record.title,
+      sortable: true
+    },
+    {
+      header: 'Status',
+      value: (record) => record.status,
+      sortable: true
+    },
+    {
+      header: 'Owner',
+      value: (record) => record.owner,
+      sortable: true
+    },
+    {
+      header: 'Category',
+      value: (record) => record.category,
+      sortable: true
+    },
+    {
+      header: 'Updated',
+      value: (record) => this.formatDate(record.updatedAt),
+      sortValue: (record) => new Date(record.updatedAt).getTime(),
+      sortable: true
+    }
   ];
 
   protected readonly cardConfig: DataViewCardConfig<RecordItem> = {
@@ -105,7 +244,7 @@ export class RecordListPageComponent {
     record.id
   ];
 
-  private formatDate(value: string): string {
+  protected formatDate(value: string): string {
     return new Intl.DateTimeFormat('en-US', {
       dateStyle: 'medium',
       timeStyle: 'short'
