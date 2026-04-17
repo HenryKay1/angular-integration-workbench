@@ -1,6 +1,7 @@
 import { CommonModule, JsonPipe } from '@angular/common';
 import { Component } from '@angular/core';
 import {
+  DropdownSelection,
   FormConfig,
   FormSubmissionValue
 } from '../../../shared/components/form-shell/form-config.model';
@@ -15,10 +16,11 @@ import { FormShellComponent } from '../../../shared/components/form-shell/form-s
       <header class="forms-page__header">
         <div>
           <p class="forms-page__eyebrow">Reusable Form Foundation</p>
-          <h2>Phase 0 and 1 workbench</h2>
+          <h2>Phase 0, 1, and 2 workbench</h2>
           <p class="forms-page__intro">
             This demo keeps the new form shell decoupled from records save logic while
-            proving the contracts, layouts, reactive form generation, and confirmation flow.
+            proving contracts, layouts, reactive form generation, confirmation flow,
+            and the searchable dropdown field contract.
           </p>
         </div>
       </header>
@@ -27,7 +29,7 @@ import { FormShellComponent } from '../../../shared/components/form-shell/form-s
         <article class="forms-page__panel">
           <div class="forms-page__panel-header">
             <h3>Simple Layout</h3>
-            <p>Flat config with three-up density and standard fields only.</p>
+            <p>Flat config with three-up density, standard fields, and a searchable dropdown.</p>
           </div>
 
           <aiw-form-shell
@@ -42,7 +44,7 @@ import { FormShellComponent } from '../../../shared/components/form-shell/form-s
         <article class="forms-page__panel">
           <div class="forms-page__panel-header">
             <h3>Sectioned Layout</h3>
-            <p>Top-level sections, collapsed-by-default support, and submit confirmation.</p>
+            <p>Top-level sections, collapsed-by-default support, dropdown Other mode, and submit confirmation.</p>
           </div>
 
           <aiw-form-shell
@@ -146,6 +148,11 @@ export class FormFoundationDemoPageComponent {
     title: 'Quarterly integration refresh',
     owner: 'Platform Team',
     statusNote: 'Needs final QA sign-off.',
+    category: {
+      selectedKey: 'operations',
+      selectedLabel: 'Operations',
+      isOther: false
+    } satisfies DropdownSelection,
     retryCount: 2,
     goLiveDate: '2026-05-15',
     notifyStakeholders: true
@@ -154,7 +161,12 @@ export class FormFoundationDemoPageComponent {
   protected readonly sectionedInitialValue: FormSubmissionValue = {
     recordTitle: 'Customer profile sync',
     owner: 'Data Operations',
-    environment: 'UAT',
+    environment: {
+      selectedKey: undefined,
+      selectedLabel: 'Other',
+      isOther: true,
+      otherValue: 'UAT'
+    } satisfies DropdownSelection,
     summary: 'Refresh mapping and validate transformed payload fields.',
     runbookLink: 'https://internal.example/runbooks/customer-profile-sync',
     approved: false
@@ -163,6 +175,7 @@ export class FormFoundationDemoPageComponent {
   protected readonly simpleFormConfig: FormConfig = {
     layout: 'simple',
     fieldsPerLine: 3,
+    fieldSpacing: '1rem',
     fields: [
       {
         key: 'title',
@@ -184,6 +197,20 @@ export class FormFoundationDemoPageComponent {
         type: 'textarea',
         helperText: 'Use this for lightweight implementation notes.',
         colSpan: 3
+      },
+      {
+        key: 'category',
+        label: 'Category',
+        type: 'dropdown',
+        required: true,
+        searchable: true,
+        placeholder: 'Choose a category',
+        options: [
+          { label: 'Operations', value: 'operations' },
+          { label: 'Compliance', value: 'compliance' },
+          { label: 'Billing', value: 'billing' },
+          { label: 'Customer Data', value: 'customer-data' }
+        ]
       },
       {
         key: 'retryCount',
@@ -210,6 +237,7 @@ export class FormFoundationDemoPageComponent {
   protected readonly sectionedFormConfig: FormConfig = {
     layout: 'sectioned',
     fieldsPerLine: 2,
+    fieldSpacing: '1.25rem',
     requireSubmitConfirmation: true,
     submitConfirmationTitle: 'Submit sectioned demo?',
     submitConfirmationMessage:
@@ -249,7 +277,21 @@ export class FormFoundationDemoPageComponent {
           {
             key: 'environment',
             label: 'Environment',
-            type: 'text'
+            type: 'dropdown',
+            required: true,
+            searchable: true,
+            allowOther: true,
+            placeholder: 'Select an environment',
+            options: [
+              { label: 'Development', value: 'dev' },
+              { label: 'QA', value: 'qa' },
+              { label: 'Staging', value: 'staging' },
+              { label: 'Production', value: 'prod' },
+              { label: 'Development1', value: 'dev1' },
+              { label: 'QA1', value: 'qa1' },
+              { label: 'Staging1', value: 'staging1' },
+              { label: 'Production1', value: 'prod1' }
+            ]
           },
           {
             key: 'runbookLink',

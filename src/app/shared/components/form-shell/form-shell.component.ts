@@ -8,13 +8,18 @@ import {
   SimpleChanges
 } from '@angular/core';
 import {
+  AbstractControl,
   FormBuilder,
   FormControl,
   FormGroup,
   ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
   Validators
 } from '@angular/forms';
+import { DropdownFieldComponent } from '../dropdown-field/dropdown-field.component';
 import {
+  DropdownSelection,
   FormConfig,
   FormFieldConfig,
   FormSectionConfig,
@@ -24,7 +29,7 @@ import {
 @Component({
   selector: 'aiw-form-shell',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, DropdownFieldComponent],
   template: `
     <form
       class="form-shell"
@@ -139,6 +144,17 @@ import {
               <span class="form-shell__label" [title]="field.label">{{ field.label }}</span>
             </label>
 
+            <label *ngSwitchCase="'dropdown'" class="form-shell__control">
+              <span class="form-shell__label" [title]="field.label">{{ field.label }}</span>
+              <aiw-dropdown-field
+                [formControlName]="field.key"
+                [options]="field.options"
+                [searchable]="field.searchable ?? false"
+                [allowOther]="field.allowOther ?? false"
+                [placeholder]="field.placeholder ?? 'Select an option'"
+              />
+            </label>
+
             <div *ngSwitchDefault class="form-shell__unsupported">
               <strong class="form-shell__label" [title]="field.label">{{ field.label }}</strong>
               <p>
@@ -225,7 +241,7 @@ import {
       border-radius: 0.85rem;
       background: #ffffff;
       box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
-      overflow: hidden;
+      overflow: visible;
     }
 
     .form-shell__section-header h3 {
@@ -274,7 +290,7 @@ import {
       display: block;
       min-width: 0;
       max-width: 100%;
-      overflow: hidden;
+      overflow: visible;
       text-overflow: ellipsis;
       white-space: nowrap;
       cursor: help;
@@ -324,7 +340,7 @@ import {
     .form-shell__helper {
       display: block;
       max-width: 100%;
-      overflow: hidden;
+      overflow: visible;
       color: #52606d;
       font-size: 0.9rem;
       text-overflow: ellipsis;
@@ -493,7 +509,7 @@ export class FormShellComponent implements OnChanges {
       return null;
     }
 
-    return String(value);
+    return typeof value === 'object' ? JSON.stringify(value) : String(value);
   }
 
   protected handleSubmit(): void {
@@ -527,6 +543,10 @@ export class FormShellComponent implements OnChanges {
     }
 
     if (control.errors['required']) {
+      if (field.type === 'dropdown') {
+        return `Please choose a ${field.label.toLowerCase()}.`;
+      }
+
       return `${field.label} is required.`;
     }
 
@@ -564,8 +584,12 @@ export class FormShellComponent implements OnChanges {
     const initialValue = this.initialValue[field.key] ?? this.getDefaultValue(field);
     const validators = [];
 
-    if (field.required && field.type !== 'checkbox') {
-      validators.push(Validators.required);
+    if (field.required) {
+      if (field.type === 'dropdown') {
+        validators.push(this.createDropdownRequiredValidator());
+      } else if (field.type !== 'checkbox') {
+        validators.push(Validators.required);
+      }
     }
 
     if (field.type === 'number') {
@@ -589,6 +613,10 @@ export class FormShellComponent implements OnChanges {
       return false;
     }
 
+    if (field.type === 'dropdown') {
+      return null;
+    }
+
     return '';
   }
 
@@ -600,7 +628,26 @@ export class FormShellComponent implements OnChanges {
     return this.config.fields ?? [];
   }
 
+  private createDropdownRequiredValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value as DropdownSelection | null;
+
+      if (!value) {
+        return { required: true };
+      }
+
+      if (value.isOther) {
+        return value.otherValue?.trim() ? null : { required: true };
+      }
+
+      return value.selectedKey !== undefined && value.selectedKey !== null && value.selectedKey !== ''
+        ? null
+        : { required: true };
+    };
+  }
+
   private emitSubmission(): void {
     this.submitForm.emit(this.form.getRawValue());
   }
 }
+
