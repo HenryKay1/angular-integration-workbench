@@ -15,6 +15,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
         <nav class="shell__nav">
           <a routerLink="/" routerLinkActive="shell__link--active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
+          <a routerLink="/forms" routerLinkActive="shell__link--active">Forms</a>
           <a routerLink="/records" routerLinkActive="shell__link--active">Records</a>
         </nav>
       </header>

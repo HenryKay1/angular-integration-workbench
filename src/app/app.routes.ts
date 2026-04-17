@@ -11,6 +11,14 @@ export const routes: Routes = [
       )
   },
   {
+    path: 'forms',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/forms/pages/form-foundation-demo-page.component').then(
+        (module) => module.FormFoundationDemoPageComponent
+      )
+  },
+  {
     path: 'records',
     canActivate: [authGuard],
     loadComponent: () =>
