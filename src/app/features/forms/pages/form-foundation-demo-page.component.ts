@@ -16,11 +16,11 @@ import { FormShellComponent } from '../../../shared/components/form-shell/form-s
       <header class="forms-page__header">
         <div>
           <p class="forms-page__eyebrow">Reusable Form Foundation</p>
-          <h2>Phase 0, 1, and 2 workbench</h2>
+          <h2>Phase 0 through 3 workbench</h2>
           <p class="forms-page__intro">
             This demo keeps the new form shell decoupled from records save logic while
             proving contracts, layouts, reactive form generation, confirmation flow,
-            and the searchable dropdown field contract.
+            searchable dropdown behavior, and local picture upload previews.
           </p>
         </div>
       </header>
@@ -29,7 +29,7 @@ import { FormShellComponent } from '../../../shared/components/form-shell/form-s
         <article class="forms-page__panel">
           <div class="forms-page__panel-header">
             <h3>Simple Layout</h3>
-            <p>Flat config with three-up density, standard fields, and a searchable dropdown.</p>
+            <p>Flat config with standard fields, dropdown search, and a single-image picture upload.</p>
           </div>
 
           <aiw-form-shell
@@ -44,7 +44,7 @@ import { FormShellComponent } from '../../../shared/components/form-shell/form-s
         <article class="forms-page__panel">
           <div class="forms-page__panel-header">
             <h3>Sectioned Layout</h3>
-            <p>Top-level sections, collapsed-by-default support, dropdown Other mode, and submit confirmation.</p>
+            <p>Top-level sections, dropdown custom entry, confirmation flow, and multi-image previews.</p>
           </div>
 
           <aiw-form-shell
@@ -155,7 +155,8 @@ export class FormFoundationDemoPageComponent {
     } satisfies DropdownSelection,
     retryCount: 2,
     goLiveDate: '2026-05-15',
-    notifyStakeholders: true
+    notifyStakeholders: true,
+    avatar: null
   };
 
   protected readonly sectionedInitialValue: FormSubmissionValue = {
@@ -169,6 +170,7 @@ export class FormFoundationDemoPageComponent {
     } satisfies DropdownSelection,
     summary: 'Refresh mapping and validate transformed payload fields.',
     runbookLink: 'https://internal.example/runbooks/customer-profile-sync',
+    gallery: null,
     approved: false
   };
 
@@ -225,6 +227,16 @@ export class FormFoundationDemoPageComponent {
         label: 'Go-live date',
         type: 'date',
         required: true
+      },
+      {
+        key: 'avatar',
+        label: 'Primary image',
+        type: 'picture-upload',
+        required: true,
+        previewShape: 'circle',
+        accept: 'image/*',
+        helperText: 'Single-image mode with circular preview styling.',
+        colSpan: 2
       },
       {
         key: 'notifyStakeholders',
@@ -300,6 +312,18 @@ export class FormFoundationDemoPageComponent {
             helperText: 'This remains plain text until richer field types arrive.'
           },
           {
+            key: 'gallery',
+            label: 'Reference images',
+            type: 'picture-upload',
+            multiple: true,
+            maxFiles: 4,
+            previewShape: 'rect',
+            aspectRatio: '16 / 9',
+            accept: 'image/*',
+            helperText: 'Multiple-image mode with rectangular previews and remove support.',
+            colSpan: 2
+          },
+          {
             key: 'approved',
             label: 'Approved for release',
             type: 'checkbox',
@@ -310,4 +334,3 @@ export class FormFoundationDemoPageComponent {
     ]
   };
 }
-

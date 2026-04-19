@@ -18,18 +18,25 @@ import {
   Validators
 } from '@angular/forms';
 import { DropdownFieldComponent } from '../dropdown-field/dropdown-field.component';
+import { PictureUploadFieldComponent } from '../picture-upload-field/picture-upload-field.component';
 import {
   DropdownSelection,
   FormConfig,
   FormFieldConfig,
   FormSectionConfig,
-  FormSubmissionValue
+  FormSubmissionValue,
+  UploadedImageItem
 } from './form-config.model';
 
 @Component({
   selector: 'aiw-form-shell',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DropdownFieldComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    DropdownFieldComponent,
+    PictureUploadFieldComponent
+  ],
   template: `
     <form
       class="form-shell"
@@ -154,6 +161,18 @@ import {
                 [placeholder]="field.placeholder ?? 'Select an option'"
               />
             </label>
+
+            <div *ngSwitchCase="'picture-upload'" class="form-shell__control">
+              <span class="form-shell__label" [title]="field.label">{{ field.label }}</span>
+              <aiw-picture-upload-field
+                [formControlName]="field.key"
+                [multiple]="field.multiple ?? false"
+                [previewShape]="field.previewShape ?? 'rect'"
+                [aspectRatio]="field.aspectRatio"
+                [maxFiles]="field.maxFiles"
+                [accept]="field.accept"
+              />
+            </div>
 
             <div *ngSwitchDefault class="form-shell__unsupported">
               <strong class="form-shell__label" [title]="field.label">{{ field.label }}</strong>
@@ -547,6 +566,10 @@ export class FormShellComponent implements OnChanges {
         return `Please choose a ${field.label.toLowerCase()}.`;
       }
 
+      if (field.type === 'picture-upload') {
+        return `Please add ${field.multiple ? 'at least one image' : 'an image'}.`;
+      }
+
       return `${field.label} is required.`;
     }
 
@@ -587,6 +610,8 @@ export class FormShellComponent implements OnChanges {
     if (field.required) {
       if (field.type === 'dropdown') {
         validators.push(this.createDropdownRequiredValidator());
+      } else if (field.type === 'picture-upload') {
+        validators.push(this.createPictureUploadRequiredValidator());
       } else if (field.type !== 'checkbox') {
         validators.push(Validators.required);
       }
@@ -613,7 +638,7 @@ export class FormShellComponent implements OnChanges {
       return false;
     }
 
-    if (field.type === 'dropdown') {
+    if (field.type === 'dropdown' || field.type === 'picture-upload') {
       return null;
     }
 
@@ -646,8 +671,23 @@ export class FormShellComponent implements OnChanges {
     };
   }
 
+  private createPictureUploadRequiredValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value as UploadedImageItem[] | UploadedImageItem | null;
+
+      if (!value) {
+        return { required: true };
+      }
+
+      if (Array.isArray(value)) {
+        return value.length > 0 ? null : { required: true };
+      }
+
+      return value.file ? null : { required: true };
+    };
+  }
+
   private emitSubmission(): void {
     this.submitForm.emit(this.form.getRawValue());
   }
 }
-

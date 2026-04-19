@@ -1,30 +1,38 @@
 # Angular Integration Workbench
 
 ## Purpose
-Angular Integration Workbench is a lightweight enterprise-style Angular application for exploring modular frontend architecture, integration-oriented workflows, and structured record inspection patterns.
+Angular Integration Workbench is a lightweight Angular 19 application for exploring enterprise-style frontend architecture, reusable UI foundations, and integration-focused record workflows.
 
-## Current Phase
-Phase 1: architecture shell and foundational Angular setup.
+## Current Scope
+The project currently includes a routed application shell, mock-data-driven record experiences, and a reusable form foundation that is being expanded through incremental component work.
 
-## Planned Features
-- Dashboard overview for integration activity
-- Record list and record detail pages
-- Record history timeline and diff views
-- JSON-oriented payload inspection
-- Mock-data driven development for early UI iteration
-- Guard and interceptor patterns for application-wide concerns
+Current pages:
+- `/` dashboard landing page
+- `/forms` form foundation demo page
+- `/records` record list page
+- `/records/:id` record detail page
+- `/records/:id/history/:historyId` record diff page
 
-## Architecture Overview
-- `core`: application-wide guards, interceptors, models, and services
-- `features`: feature-specific pages and flows such as dashboard and records
-- `assets/mock-data`: realistic sample data for records and history
-- Standalone Angular configuration with route-based page loading
-- `shared`: planned for reusable components and utilities, but not scaffolded yet
+## Active Components
+- `core`: auth guard, auth interceptor, shared models, and record service contracts
+- `features/dashboard`: dashboard landing experience
+- `features/forms`: form foundation demo for configuration-driven form rendering
+- `features/records`: record list, detail, and diff workflows backed by mock data
+- `shared/components/form-shell`: reusable form shell for simple and sectioned layouts
+- `shared/components/dropdown-field`: searchable dropdown field with support for controlled selection flows
+- `shared/components/data-view`: shared data presentation building block
+- `shared/components/picture-upload-field`: base profile picture and image upload component used for local preview-driven form flows
+- `assets/mock-data`: sample records and history payloads for UI iteration
 
-## AI-Assisted Workflow
-This project follows a design-first, incremental workflow where AI assists with scaffolding and implementation, while human review drives validation, refinement, and architectural decisions.
+## AI-Driven Development With Codex
+This repository is being developed through an AI-assisted workflow centered on Codex. The current approach emphasizes:
 
-## Manual Run
+- rapid scaffolding of Angular pages and reusable components
+- iterative refinement of shared form patterns before feature-specific save logic is introduced
+- human-reviewed architecture decisions, naming, and cleanup after each implementation pass
+- commit-sized delivery of focused improvements, including foundational UI pieces like the picture upload field
+
+## Run Locally
 From the project root:
 
 ```powershell
@@ -32,10 +40,11 @@ npm install
 npm start
 ```
 
-The Angular dev server should start on `http://localhost:4200/`.
+The Angular dev server runs at `http://localhost:4200/`.
 
 ## Manual Validation Checklist
-- Open `http://localhost:4200/` and confirm the dashboard page renders under the application header.
-- Open `http://localhost:4200/records` and confirm the record list loads from mock data.
-- Open an individual record and then a history/diff view to confirm routing works end to end.
-- Watch the terminal for Angular compile errors, missing asset errors, or route/navigation failures.
+- Open `http://localhost:4200/` and confirm the dashboard renders inside the main app shell.
+- Open `http://localhost:4200/forms` and confirm the form foundation demo shows simple and sectioned form layouts.
+- Verify dropdown interactions, confirmation flow, and local image preview behavior on the forms demo page.
+- Open `http://localhost:4200/records` and confirm record data loads from mock assets.
+- Open a record detail view and a history diff view to confirm routed navigation works end to end.
