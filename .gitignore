@@ -2,10 +2,8 @@ node_modules/
 .angular/
 dist/
 .vscode/
-notes.txt
 .codex-design-doc/
 .codex-design-doc.zip
-checkpoint.docx
-designDoc.docx
-notes.docx
 local/
+ng-serve.err.log
+ng-serve.out.log
