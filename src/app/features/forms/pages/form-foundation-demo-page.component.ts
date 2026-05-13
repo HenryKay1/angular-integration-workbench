@@ -20,7 +20,7 @@ import { FormShellComponent } from '../../../shared/components/form-shell/form-s
           <p class="forms-page__intro">
             This demo keeps the new form shell decoupled from records save logic while
             proving contracts, layouts, reactive form generation, confirmation flow,
-            searchable dropdown behavior, and local picture upload previews.
+            searchable dropdown behavior, image-header editing, and flexible file uploads.
           </p>
         </div>
       </header>
@@ -29,7 +29,7 @@ import { FormShellComponent } from '../../../shared/components/form-shell/form-s
         <article class="forms-page__panel">
           <div class="forms-page__panel-header">
             <h3>Simple Layout</h3>
-            <p>Flat config with standard fields, dropdown search, and a single-image picture upload.</p>
+            <p>Flat config with standard fields, dropdown search, a single image header, and file upload metadata.</p>
           </div>
 
           <aiw-form-shell
@@ -44,7 +44,7 @@ import { FormShellComponent } from '../../../shared/components/form-shell/form-s
         <article class="forms-page__panel">
           <div class="forms-page__panel-header">
             <h3>Sectioned Layout</h3>
-            <p>Top-level sections, dropdown custom entry, confirmation flow, and multi-image previews.</p>
+            <p>Top-level sections, dropdown custom entry, confirmation flow, and multiple file attachments.</p>
           </div>
 
           <aiw-form-shell
@@ -156,7 +156,8 @@ export class FormFoundationDemoPageComponent {
     retryCount: 2,
     goLiveDate: '2026-05-15',
     notifyStakeholders: true,
-    avatar: null
+    heroImage: null,
+    supportingDoc: null
   };
 
   protected readonly sectionedInitialValue: FormSubmissionValue = {
@@ -170,7 +171,7 @@ export class FormFoundationDemoPageComponent {
     } satisfies DropdownSelection,
     summary: 'Refresh mapping and validate transformed payload fields.',
     runbookLink: 'https://internal.example/runbooks/customer-profile-sync',
-    gallery: null,
+    attachments: null,
     approved: false
   };
 
@@ -229,13 +230,29 @@ export class FormFoundationDemoPageComponent {
         required: true
       },
       {
-        key: 'avatar',
-        label: 'Primary image',
-        type: 'picture-upload',
-        required: true,
-        previewShape: 'circle',
+        key: 'heroImage',
+        label: 'Image header',
+        type: 'image-header',
+        required: false,
         accept: 'image/*',
-        helperText: 'Single-image mode with circular preview styling.',
+        profileType: false,
+        shape: 'circle',
+        size: 'md',
+        frameSizePx: 80,
+        defaultPosition: 'center',
+        multiple: true,
+        showLabels: true,
+        helperText: 'Supports optional validation, shared label display, multiple images, and horizontal scrolling when the header runs out of space.',
+        colSpan: 2
+      },
+      {
+        key: 'supportingDoc',
+        label: 'Supporting file',
+        type: 'file-upload',
+        required: true,
+        accept: '.png,.jpg,.jpeg,.pdf,.doc,.docx,.xls,.xlsx',
+        allowAssignedFilename: true,
+        helperText: 'Styled upload with editable assigned filename, extension display, and preview action.',
         colSpan: 2
       },
       {
@@ -312,15 +329,14 @@ export class FormFoundationDemoPageComponent {
             helperText: 'This remains plain text until richer field types arrive.'
           },
           {
-            key: 'gallery',
-            label: 'Reference images',
-            type: 'picture-upload',
+            key: 'attachments',
+            label: 'Attachments',
+            type: 'file-upload',
             multiple: true,
             maxFiles: 4,
-            previewShape: 'rect',
-            aspectRatio: '16 / 9',
-            accept: 'image/*',
-            helperText: 'Multiple-image mode with rectangular previews and remove support.',
+            accept: '.png,.jpg,.jpeg,.pdf,.doc,.docx,.xls,.xlsx,.txt',
+            allowAssignedFilename: true,
+            helperText: 'Supports images, Office docs, PDFs, text files, and other browser-openable uploads.',
             colSpan: 2
           },
           {

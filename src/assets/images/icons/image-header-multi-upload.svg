@@ -1,0 +1,37 @@
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cardA" x1="26" y1="26" x2="92" y2="104" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E8F7F5"/>
+      <stop offset="1" stop-color="#CFE8E4"/>
+    </linearGradient>
+    <linearGradient id="cardB" x1="50" y1="40" x2="120" y2="122" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FBFC"/>
+      <stop offset="1" stop-color="#DDE8EE"/>
+    </linearGradient>
+    <linearGradient id="scene" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#2E8C87"/>
+      <stop offset="1" stop-color="#175E69"/>
+    </linearGradient>
+    <filter id="shadow" x="8" y="14" width="116" height="112" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#102A43" flood-opacity="0.12"/>
+    </filter>
+    <filter id="badgeShadow" x="88" y="88" width="46" height="46" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#102A43" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <rect x="28" y="28" width="54" height="66" rx="10" transform="rotate(-12 28 28)" fill="url(#cardA)"/>
+    <circle cx="48" cy="49" r="6" fill="white" fill-opacity="0.8"/>
+    <path d="M26 81L42 66L54 76L68 58L82 81V90H29L26 81Z" fill="#5BA79E" fill-opacity="0.95"/>
+    <rect x="44" y="36" width="58" height="70" rx="12" fill="url(#cardB)"/>
+    <circle cx="60" cy="53" r="7" fill="#D7E6EE"/>
+    <path d="M48 89L66 72L79 83L94 61L109 89V96H48V89Z" fill="url(#scene)"/>
+    <rect x="44" y="36" width="58" height="70" rx="12" stroke="#B9CBD7" stroke-width="2"/>
+  </g>
+  <g filter="url(#badgeShadow)">
+    <circle cx="108" cy="108" r="16" fill="#0F766E"/>
+    <path d="M108 109.5V98.5" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M103.25 103.25L108 98.5L112.75 103.25" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M100 111.5V112.5C100 113.328 100.672 114 101.5 114H114.5C115.328 114 116 113.328 116 112.5V111.5" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>

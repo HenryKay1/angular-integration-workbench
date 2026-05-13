@@ -60,6 +60,42 @@ export interface PictureUploadFieldConfig extends BaseFieldConfig {
   accept?: string;
 }
 
+export type ImageHeaderSize = 'sm' | 'md' | 'lg';
+export type ImageHeaderPosition = 'left' | 'center' | 'right';
+export type ImageHeaderShape = 'circle' | 'rectangle' | 'square' | 'triangle';
+export type ImageHeaderDisplayMode = 'scroll' | 'slideshow';
+export type ImageHeaderItemsPerPage = 1 | 2 | 3 | 4 | 5;
+
+export interface ImageCropSettings {
+  zoom: number;
+  offsetX: number;
+  offsetY: number;
+}
+
+export interface ImageHeaderFieldConfig extends BaseFieldConfig {
+  type: 'image-header';
+  accept?: string;
+  defaultPosition?: ImageHeaderPosition;
+  profileType?: boolean;
+  size?: ImageHeaderSize;
+  frameSizePx?: number;
+  multiple?: boolean;
+  maxFiles?: number;
+  showLabels?: boolean;
+  shape?: ImageHeaderShape;
+  displayMode?: ImageHeaderDisplayMode;
+  itemsPerPage?: ImageHeaderItemsPerPage;
+  slideshowIntervalSeconds?: number;
+}
+
+export interface FileUploadFieldConfig extends BaseFieldConfig {
+  type: 'file-upload';
+  multiple?: boolean;
+  maxFiles?: number;
+  accept?: string;
+  allowAssignedFilename?: boolean;
+}
+
 export type FormFieldConfig =
   | TextFieldConfig
   | TextAreaFieldConfig
@@ -67,7 +103,9 @@ export type FormFieldConfig =
   | CheckboxFieldConfig
   | DateFieldConfig
   | DropdownFieldConfig
-  | PictureUploadFieldConfig;
+  | PictureUploadFieldConfig
+  | ImageHeaderFieldConfig
+  | FileUploadFieldConfig;
 
 export interface FormSectionConfig {
   key: string;
@@ -99,7 +137,34 @@ export interface UploadedImageItem {
   id: string;
   file: File;
   previewUrl?: string;
+  sourceUrl?: string;
   status?: 'new';
+}
+
+export interface UploadedFileItem {
+  id: string;
+  file?: File;
+  originalName: string;
+  assignedName?: string;
+  extension: string;
+  mimeType: string;
+  sizeBytes: number;
+  previewUrl?: string;
+  sourceUrl?: string;
+  status?: 'new';
+}
+
+export interface ImageHeaderValue extends UploadedFileItem {
+  position: ImageHeaderPosition;
+  profileType: boolean;
+  size: ImageHeaderSize;
+  frameSizePx?: number;
+  shape?: ImageHeaderShape;
+  crop?: ImageCropSettings;
+  displayMode?: ImageHeaderDisplayMode;
+  itemsPerPage?: ImageHeaderItemsPerPage;
+  slideshowIntervalSeconds?: number;
+  hidden?: boolean;
 }
 
 export type FormSubmissionValue = Record<string, unknown>;

@@ -18,13 +18,17 @@ import {
   Validators
 } from '@angular/forms';
 import { DropdownFieldComponent } from '../dropdown-field/dropdown-field.component';
-import { PictureUploadFieldComponent } from '../picture-upload-field/picture-upload-field.component';
+import { FileUploadFieldComponent } from '../file-upload-field/file-upload-field.component';
+import { ImageHeaderFieldComponent } from '../image-header-field/image-header-field.component';
 import {
   DropdownSelection,
   FormConfig,
   FormFieldConfig,
+  ImageHeaderFieldConfig,
   FormSectionConfig,
   FormSubmissionValue,
+  ImageHeaderValue,
+  UploadedFileItem,
   UploadedImageItem
 } from './form-config.model';
 
@@ -35,7 +39,8 @@ import {
     CommonModule,
     ReactiveFormsModule,
     DropdownFieldComponent,
-    PictureUploadFieldComponent
+    ImageHeaderFieldComponent,
+    FileUploadFieldComponent
   ],
   template: `
     <form
@@ -44,6 +49,33 @@ import {
       (ngSubmit)="handleSubmit()"
       novalidate
     >
+      <section
+        *ngIf="topImageHeaderField as imageHeaderField"
+        class="form-shell__panel form-shell__panel--image-header"
+      >
+        <div class="form-shell__field">
+          <aiw-image-header-field
+            [formControlName]="imageHeaderField.key"
+            [accept]="imageHeaderField.accept"
+            [defaultPosition]="imageHeaderField.defaultPosition ?? 'center'"
+            [profileType]="imageHeaderField.profileType ?? false"
+            [size]="imageHeaderField.size ?? 'md'"
+            [frameSizePx]="imageHeaderField.frameSizePx"
+            [multiple]="imageHeaderField.multiple ?? false"
+            [maxFiles]="imageHeaderField.maxFiles"
+            [showLabels]="imageHeaderField.showLabels ?? true"
+            [shape]="imageHeaderField.shape ?? ((imageHeaderField.profileType ?? false) ? 'circle' : 'rectangle')"
+            [displayMode]="imageHeaderField.displayMode"
+            [itemsPerPage]="imageHeaderField.itemsPerPage ?? 4"
+            [slideshowIntervalSeconds]="imageHeaderField.slideshowIntervalSeconds ?? 5"
+          />
+
+          <p *ngIf="getErrorMessage(imageHeaderField) as errorMessage" class="form-shell__error">
+            {{ errorMessage }}
+          </p>
+        </div>
+      </section>
+
       <div class="form-shell__content">
         <ng-container *ngIf="config.layout === 'simple'; else sectionedLayout">
           <section class="form-shell__panel">
@@ -162,16 +194,23 @@ import {
               />
             </label>
 
-            <div *ngSwitchCase="'picture-upload'" class="form-shell__control">
+            <div *ngSwitchCase="'file-upload'" class="form-shell__control">
               <span class="form-shell__label" [title]="field.label">{{ field.label }}</span>
-              <aiw-picture-upload-field
+              <aiw-file-upload-field
                 [formControlName]="field.key"
                 [multiple]="field.multiple ?? false"
-                [previewShape]="field.previewShape ?? 'rect'"
-                [aspectRatio]="field.aspectRatio"
                 [maxFiles]="field.maxFiles"
                 [accept]="field.accept"
+                [allowAssignedFilename]="field.allowAssignedFilename ?? true"
               />
+            </div>
+
+            <div *ngSwitchCase="'picture-upload'" class="form-shell__control">
+              <span class="form-shell__label" [title]="field.label">{{ field.label }}</span>
+              <div class="form-shell__unsupported">
+                <strong class="form-shell__label">Legacy picture-upload</strong>
+                <p>Use the new image-header or file-upload field types for Phase 3.</p>
+              </div>
             </div>
 
             <div *ngSwitchDefault class="form-shell__unsupported">
@@ -261,6 +300,13 @@ import {
       background: #ffffff;
       box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
       overflow: visible;
+    }
+
+    .form-shell__panel--image-header {
+      align-content: start;
+      padding: 0;
+      border-radius: 0.55rem 0.55rem 1.15rem 1.15rem;
+      overflow: hidden;
     }
 
     .form-shell__section-header h3 {
@@ -486,13 +532,25 @@ export class FormShellComponent implements OnChanges {
   }
 
   protected get visibleFields(): FormFieldConfig[] {
-    return (this.config.fields ?? []).filter((field) => !field.hidden);
+    return (this.config.fields ?? []).filter(
+      (field) => !field.hidden && field.type !== 'image-header'
+    );
   }
 
   protected get visibleSections(): FormSectionConfig[] {
     return (this.config.sections ?? []).filter(
       (section) => this.getVisibleSectionFields(section).length > 0
     );
+  }
+
+  protected get topImageHeaderField(): ImageHeaderFieldConfig | null {
+    const fields = this.getAllFields();
+    const imageHeaderField = fields.find(
+      (field): field is ImageHeaderFieldConfig =>
+        !field.hidden && field.type === 'image-header'
+    );
+
+    return imageHeaderField ?? null;
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -502,7 +560,7 @@ export class FormShellComponent implements OnChanges {
   }
 
   protected getVisibleSectionFields(section: FormSectionConfig): FormFieldConfig[] {
-    return section.fields.filter((field) => !field.hidden);
+    return section.fields.filter((field) => !field.hidden && field.type !== 'image-header');
   }
 
   protected isSectionCollapsed(sectionKey: string): boolean {
@@ -566,8 +624,12 @@ export class FormShellComponent implements OnChanges {
         return `Please choose a ${field.label.toLowerCase()}.`;
       }
 
-      if (field.type === 'picture-upload') {
-        return `Please add ${field.multiple ? 'at least one image' : 'an image'}.`;
+      if (field.type === 'picture-upload' || field.type === 'image-header') {
+        return `Please add an image.`;
+      }
+
+      if (field.type === 'file-upload') {
+        return `Please add ${field.multiple ? 'at least one file' : 'a file'}.`;
       }
 
       return `${field.label} is required.`;
@@ -612,6 +674,10 @@ export class FormShellComponent implements OnChanges {
         validators.push(this.createDropdownRequiredValidator());
       } else if (field.type === 'picture-upload') {
         validators.push(this.createPictureUploadRequiredValidator());
+      } else if (field.type === 'image-header') {
+        validators.push(this.createImageHeaderRequiredValidator());
+      } else if (field.type === 'file-upload') {
+        validators.push(this.createFileUploadRequiredValidator());
       } else if (field.type !== 'checkbox') {
         validators.push(Validators.required);
       }
@@ -638,7 +704,12 @@ export class FormShellComponent implements OnChanges {
       return false;
     }
 
-    if (field.type === 'dropdown' || field.type === 'picture-upload') {
+    if (
+      field.type === 'dropdown' ||
+      field.type === 'picture-upload' ||
+      field.type === 'image-header' ||
+      field.type === 'file-upload'
+    ) {
       return null;
     }
 
@@ -684,6 +755,38 @@ export class FormShellComponent implements OnChanges {
       }
 
       return value.file ? null : { required: true };
+    };
+  }
+
+  private createImageHeaderRequiredValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value as ImageHeaderValue[] | ImageHeaderValue | null;
+
+      if (!value) {
+        return { required: true };
+      }
+
+      if (Array.isArray(value)) {
+        return value.length > 0 ? null : { required: true };
+      }
+
+      return value.file || value.sourceUrl || value.previewUrl ? null : { required: true };
+    };
+  }
+
+  private createFileUploadRequiredValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value as UploadedFileItem[] | UploadedFileItem | null;
+
+      if (!value) {
+        return { required: true };
+      }
+
+      if (Array.isArray(value)) {
+        return value.length > 0 ? null : { required: true };
+      }
+
+      return value.file || value.sourceUrl || value.previewUrl ? null : { required: true };
     };
   }
 
