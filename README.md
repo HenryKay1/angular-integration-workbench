@@ -20,9 +20,12 @@ Current pages:
 - `features/records`: record list, detail, and diff workflows backed by mock data
 - `shared/components/form-shell`: reusable form shell for simple and sectioned layouts
 - `shared/components/dropdown-field`: searchable dropdown field with support for controlled selection flows
+- `shared/components/image-header-field`: modal-driven image header editor with multi-image support, shared layout settings, and per-image crop controls
+- `shared/components/file-upload-field`: attachment upload field with assigned filename metadata
 - `shared/components/data-view`: shared data presentation building block
-- `shared/components/picture-upload-field`: base profile picture and image upload component used for local preview-driven form flows
+- `shared/components/picture-upload-field`: legacy local preview-driven image upload component retained for compatibility
 - `assets/mock-data`: sample records and history payloads for UI iteration
+- `assets/images`: local image header icons and placeholder imagery used by shared upload fields
 
 ## AI-Driven Development With Codex
 This repository is being developed through an AI-assisted workflow centered on Codex. The current approach emphasizes:
@@ -30,7 +33,7 @@ This repository is being developed through an AI-assisted workflow centered on C
 - rapid scaffolding of Angular pages and reusable components
 - iterative refinement of shared form patterns before feature-specific save logic is introduced
 - human-reviewed architecture decisions, naming, and cleanup after each implementation pass
-- commit-sized delivery of focused improvements, including foundational UI pieces like the picture upload field
+- commit-sized delivery of focused improvements, including foundational UI pieces like image headers, file upload fields, and crop controls
 
 ## Run Locally
 From the project root:
@@ -45,6 +48,11 @@ The Angular dev server runs at `http://localhost:4200/`.
 ## Manual Validation Checklist
 - Open `http://localhost:4200/` and confirm the dashboard renders inside the main app shell.
 - Open `http://localhost:4200/forms` and confirm the form foundation demo shows simple and sectioned form layouts.
-- Verify dropdown interactions, confirmation flow, and local image preview behavior on the forms demo page.
+- Verify dropdown interactions, confirmation flow, image-header modal editing, crop controls, slideshow display, and file upload metadata on the forms demo page.
 - Open `http://localhost:4200/records` and confirm record data loads from mock assets.
 - Open a record detail view and a history diff view to confirm routed navigation works end to end.
+
+## Component Documentation
+- Image header field: `src/app/shared/components/image-header-field/README.md`
+- File upload field: `src/app/shared/components/file-upload-field/README.md`
+- Data view component: `src/app/shared/components/data-view/README.md`
