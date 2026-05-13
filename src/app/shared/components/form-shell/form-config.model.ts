@@ -51,15 +51,6 @@ export interface DropdownFieldConfig extends BaseFieldConfig {
   placeholder?: string;
 }
 
-export interface PictureUploadFieldConfig extends BaseFieldConfig {
-  type: 'picture-upload';
-  multiple?: boolean;
-  previewShape?: 'circle' | 'rect';
-  aspectRatio?: string;
-  maxFiles?: number;
-  accept?: string;
-}
-
 export type ImageHeaderSize = 'sm' | 'md' | 'lg';
 export type ImageHeaderPosition = 'left' | 'center' | 'right';
 export type ImageHeaderShape = 'circle' | 'rectangle' | 'square' | 'triangle';
@@ -103,7 +94,6 @@ export type FormFieldConfig =
   | CheckboxFieldConfig
   | DateFieldConfig
   | DropdownFieldConfig
-  | PictureUploadFieldConfig
   | ImageHeaderFieldConfig
   | FileUploadFieldConfig;
 
@@ -131,14 +121,6 @@ export interface DropdownSelection {
   selectedLabel?: string;
   isOther?: boolean;
   otherValue?: string;
-}
-
-export interface UploadedImageItem {
-  id: string;
-  file: File;
-  previewUrl?: string;
-  sourceUrl?: string;
-  status?: 'new';
 }
 
 export interface UploadedFileItem {

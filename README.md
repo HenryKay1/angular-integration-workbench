@@ -23,7 +23,6 @@ Current pages:
 - `shared/components/image-header-field`: modal-driven image header editor with multi-image support, shared layout settings, and per-image crop controls
 - `shared/components/file-upload-field`: attachment upload field with assigned filename metadata
 - `shared/components/data-view`: shared data presentation building block
-- `shared/components/picture-upload-field`: legacy local preview-driven image upload component retained for compatibility
 - `assets/mock-data`: sample records and history payloads for UI iteration
 - `assets/images`: local image header icons and placeholder imagery used by shared upload fields
 
@@ -53,6 +52,7 @@ The Angular dev server runs at `http://localhost:4200/`.
 - Open a record detail view and a history diff view to confirm routed navigation works end to end.
 
 ## Component Documentation
+- Dropdown field: `src/app/shared/components/dropdown-field/README.md`
 - Image header field: `src/app/shared/components/image-header-field/README.md`
 - File upload field: `src/app/shared/components/file-upload-field/README.md`
 - Data view component: `src/app/shared/components/data-view/README.md`

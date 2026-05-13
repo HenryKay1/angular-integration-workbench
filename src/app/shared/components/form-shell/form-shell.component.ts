@@ -28,8 +28,7 @@ import {
   FormSectionConfig,
   FormSubmissionValue,
   ImageHeaderValue,
-  UploadedFileItem,
-  UploadedImageItem
+  UploadedFileItem
 } from './form-config.model';
 
 @Component({
@@ -203,14 +202,6 @@ import {
                 [accept]="field.accept"
                 [allowAssignedFilename]="field.allowAssignedFilename ?? true"
               />
-            </div>
-
-            <div *ngSwitchCase="'picture-upload'" class="form-shell__control">
-              <span class="form-shell__label" [title]="field.label">{{ field.label }}</span>
-              <div class="form-shell__unsupported">
-                <strong class="form-shell__label">Legacy picture-upload</strong>
-                <p>Use the new image-header or file-upload field types for Phase 3.</p>
-              </div>
             </div>
 
             <div *ngSwitchDefault class="form-shell__unsupported">
@@ -624,7 +615,7 @@ export class FormShellComponent implements OnChanges {
         return `Please choose a ${field.label.toLowerCase()}.`;
       }
 
-      if (field.type === 'picture-upload' || field.type === 'image-header') {
+      if (field.type === 'image-header') {
         return `Please add an image.`;
       }
 
@@ -672,8 +663,6 @@ export class FormShellComponent implements OnChanges {
     if (field.required) {
       if (field.type === 'dropdown') {
         validators.push(this.createDropdownRequiredValidator());
-      } else if (field.type === 'picture-upload') {
-        validators.push(this.createPictureUploadRequiredValidator());
       } else if (field.type === 'image-header') {
         validators.push(this.createImageHeaderRequiredValidator());
       } else if (field.type === 'file-upload') {
@@ -706,7 +695,6 @@ export class FormShellComponent implements OnChanges {
 
     if (
       field.type === 'dropdown' ||
-      field.type === 'picture-upload' ||
       field.type === 'image-header' ||
       field.type === 'file-upload'
     ) {
@@ -739,22 +727,6 @@ export class FormShellComponent implements OnChanges {
       return value.selectedKey !== undefined && value.selectedKey !== null && value.selectedKey !== ''
         ? null
         : { required: true };
-    };
-  }
-
-  private createPictureUploadRequiredValidator(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const value = control.value as UploadedImageItem[] | UploadedImageItem | null;
-
-      if (!value) {
-        return { required: true };
-      }
-
-      if (Array.isArray(value)) {
-        return value.length > 0 ? null : { required: true };
-      }
-
-      return value.file ? null : { required: true };
     };
   }
 
