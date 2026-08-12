@@ -7,6 +7,7 @@ export interface BaseFieldConfig {
   hidden?: boolean;
   helperText?: string;
   colSpan?: 1 | 2 | 3;
+  align?: 'left' | 'center' | 'right';
 }
 
 export interface TextFieldConfig extends BaseFieldConfig {
@@ -63,6 +64,19 @@ export interface ImageCropSettings {
   offsetY: number;
 }
 
+export type ImageCropShape = 'circle' | 'square' | 'rectangle' | 'triangle';
+
+export interface ImageCropFieldConfig extends BaseFieldConfig {
+  type: 'image-crop';
+  accept?: string;
+  shape?: ImageCropShape;
+  frameSizePx?: number;
+  minFrameSizePx?: number;
+  maxFrameSizePx?: number;
+  rectangleAspectRatio?: string;
+  showFrame?: boolean;
+}
+
 export interface ImageHeaderFieldConfig extends BaseFieldConfig {
   type: 'image-header';
   accept?: string;
@@ -94,6 +108,7 @@ export type FormFieldConfig =
   | CheckboxFieldConfig
   | DateFieldConfig
   | DropdownFieldConfig
+  | ImageCropFieldConfig
   | ImageHeaderFieldConfig
   | FileUploadFieldConfig;
 
@@ -134,6 +149,14 @@ export interface UploadedFileItem {
   previewUrl?: string;
   sourceUrl?: string;
   status?: 'new';
+}
+
+export interface ImageCropValue extends UploadedFileItem {
+  shape: ImageCropShape;
+  frameSizePx: number;
+  showFrame: boolean;
+  crop: ImageCropSettings;
+  rectangleAspectRatio?: string;
 }
 
 export interface ImageHeaderValue extends UploadedFileItem {

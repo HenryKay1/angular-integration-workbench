@@ -1,0 +1,239 @@
+    <form
+      class="form-shell"
+      [formGroup]="form"
+      (ngSubmit)="handleSubmit()"
+      novalidate
+    >
+      <section
+        *ngIf="topImageHeaderField as imageHeaderField"
+        class="form-shell__panel form-shell__panel--image-header"
+      >
+        <div class="form-shell__field">
+          <aiw-image-header-field
+            [formControlName]="imageHeaderField.key"
+            [accept]="imageHeaderField.accept"
+            [defaultPosition]="imageHeaderField.defaultPosition ?? 'center'"
+            [profileType]="imageHeaderField.profileType ?? false"
+            [size]="imageHeaderField.size ?? 'md'"
+            [frameSizePx]="imageHeaderField.frameSizePx"
+            [multiple]="imageHeaderField.multiple ?? false"
+            [maxFiles]="imageHeaderField.maxFiles"
+            [showLabels]="imageHeaderField.showLabels ?? true"
+            [shape]="imageHeaderField.shape ?? ((imageHeaderField.profileType ?? false) ? 'circle' : 'rectangle')"
+            [displayMode]="imageHeaderField.displayMode"
+            [itemsPerPage]="imageHeaderField.itemsPerPage ?? 4"
+            [slideshowIntervalSeconds]="imageHeaderField.slideshowIntervalSeconds ?? 5"
+          />
+
+          <p *ngIf="getErrorMessage(imageHeaderField) as errorMessage" class="form-shell__error">
+            {{ errorMessage }}
+          </p>
+        </div>
+      </section>
+
+      <div class="form-shell__content">
+        <ng-container *ngIf="config.layout === 'simple'; else sectionedLayout">
+          <section class="form-shell__panel">
+            <div
+              class="form-shell__grid"
+              [style.--fields-per-line]="resolvedFieldsPerLine"
+              [style.--field-gap]="resolvedFieldSpacing"
+            >
+              <ng-container *ngFor="let field of visibleFields; trackBy: trackFieldByKey">
+                <ng-container
+                  *ngTemplateOutlet="fieldTemplate; context: { $implicit: field }"
+                />
+              </ng-container>
+            </div>
+          </section>
+        </ng-container>
+
+        <ng-template #sectionedLayout>
+          <section
+            *ngFor="let section of visibleSections; trackBy: trackSectionByKey"
+            class="form-shell__panel"
+          >
+            <button
+              *ngIf="section.collapsible"
+              type="button"
+              class="form-shell__section-toggle"
+              (click)="toggleSection(section.key)"
+            >
+              <span>{{ section.title }}</span>
+              <span>{{ isSectionCollapsed(section.key) ? '+' : '-' }}</span>
+            </button>
+
+            <div *ngIf="!section.collapsible" class="form-shell__section-header">
+              <h3>{{ section.title }}</h3>
+            </div>
+
+            <div
+              *ngIf="!isSectionCollapsed(section.key)"
+              class="form-shell__grid"
+              [style.--fields-per-line]="resolvedFieldsPerLine"
+              [style.--field-gap]="resolvedFieldSpacing"
+            >
+              <ng-container *ngFor="let field of getVisibleSectionFields(section); trackBy: trackFieldByKey">
+                <ng-container
+                  *ngTemplateOutlet="fieldTemplate; context: { $implicit: field }"
+                />
+              </ng-container>
+            </div>
+          </section>
+        </ng-template>
+      </div>
+
+      <ng-template #fieldTemplate let-field>
+        <div
+          class="form-shell__field"
+          [class.form-shell__field--align-center]="field.align === 'center'"
+          [class.form-shell__field--align-right]="field.align === 'right'"
+          [style.grid-column]="'span ' + (field.colSpan ?? 1)"
+        >
+          <ng-container [ngSwitch]="field.type">
+            <label *ngSwitchCase="'text'" class="form-shell__control">
+              <span class="form-shell__label" [title]="field.label">{{ field.label }}</span>
+              <input
+                type="text"
+                [formControlName]="field.key"
+                [placeholder]="field.placeholder ?? ''"
+                [title]="getFieldValueTooltip(field.key)"
+              />
+            </label>
+
+            <label *ngSwitchCase="'textarea'" class="form-shell__control">
+              <span class="form-shell__label" [title]="field.label">{{ field.label }}</span>
+              <textarea
+                [formControlName]="field.key"
+                [rows]="field.rows ?? 4"
+                [placeholder]="field.placeholder ?? ''"
+                [title]="getFieldValueTooltip(field.key)"
+              ></textarea>
+            </label>
+
+            <label *ngSwitchCase="'number'" class="form-shell__control">
+              <span class="form-shell__label" [title]="field.label">{{ field.label }}</span>
+              <input
+                type="number"
+                [formControlName]="field.key"
+                [attr.min]="field.min ?? null"
+                [attr.max]="field.max ?? null"
+                [attr.step]="field.step ?? null"
+                [placeholder]="field.placeholder ?? ''"
+                [title]="getFieldValueTooltip(field.key)"
+              />
+            </label>
+
+            <label *ngSwitchCase="'date'" class="form-shell__control">
+              <span class="form-shell__label" [title]="field.label">{{ field.label }}</span>
+              <input
+                type="date"
+                [formControlName]="field.key"
+                [attr.min]="field.min ?? null"
+                [attr.max]="field.max ?? null"
+                [title]="getFieldValueTooltip(field.key)"
+              />
+            </label>
+
+            <label *ngSwitchCase="'checkbox'" class="form-shell__checkbox">
+              <input type="checkbox" [formControlName]="field.key" />
+              <span class="form-shell__label" [title]="field.label">{{ field.label }}</span>
+            </label>
+
+            <label *ngSwitchCase="'dropdown'" class="form-shell__control">
+              <span class="form-shell__label" [title]="field.label">{{ field.label }}</span>
+              <aiw-dropdown-field
+                [formControlName]="field.key"
+                [options]="field.options"
+                [searchable]="field.searchable ?? false"
+                [allowOther]="field.allowOther ?? false"
+                [placeholder]="field.placeholder ?? 'Select an option'"
+              />
+            </label>
+
+            <div *ngSwitchCase="'file-upload'" class="form-shell__control">
+              <span class="form-shell__label" [title]="field.label">{{ field.label }}</span>
+              <aiw-file-upload-field
+                [formControlName]="field.key"
+                [multiple]="field.multiple ?? false"
+                [maxFiles]="field.maxFiles"
+                [accept]="field.accept"
+                [allowAssignedFilename]="field.allowAssignedFilename ?? true"
+              />
+            </div>
+
+            <div *ngSwitchCase="'image-crop'" class="form-shell__control">
+              <span class="form-shell__label" [title]="field.label">{{ field.label }}</span>
+              <aiw-image-crop-field
+                [formControlName]="field.key"
+                [accept]="field.accept"
+                [shape]="field.shape ?? 'circle'"
+                [frameSizePx]="field.frameSizePx ?? 96"
+                [minFrameSizePx]="field.minFrameSizePx ?? 72"
+                [maxFrameSizePx]="field.maxFrameSizePx ?? 360"
+                [rectangleAspectRatio]="field.rectangleAspectRatio ?? '4 / 3'"
+                [showFrame]="field.showFrame ?? true"
+              />
+            </div>
+
+            <div *ngSwitchDefault class="form-shell__unsupported">
+              <strong class="form-shell__label" [title]="field.label">{{ field.label }}</strong>
+              <p>
+                {{ field.type }} will plug in during the custom-field phases.
+              </p>
+            </div>
+          </ng-container>
+
+          <p
+            *ngIf="field.helperText"
+            class="form-shell__helper"
+            [title]="field.helperText"
+          >
+            {{ field.helperText }}
+          </p>
+
+          <p *ngIf="getErrorMessage(field) as errorMessage" class="form-shell__error">
+            {{ errorMessage }}
+          </p>
+        </div>
+      </ng-template>
+
+      <footer class="form-shell__footer">
+        <div class="form-shell__actions">
+          <button type="button" class="form-shell__button form-shell__button--ghost" (click)="cancelForm.emit()">
+            Cancel
+          </button>
+          <button type="submit" class="form-shell__button">
+            {{ submitLabel }}
+          </button>
+        </div>
+      </footer>
+    </form>
+
+    <div
+      *ngIf="isConfirmationOpen"
+      class="form-shell__modal-backdrop"
+      (click)="closeConfirmation()"
+    >
+      <section class="form-shell__modal" (click)="$event.stopPropagation()">
+        <h3>{{ config.submitConfirmationTitle || 'Confirm submission' }}</h3>
+        <p>
+          {{
+            config.submitConfirmationMessage ||
+            'Please confirm before we submit this form.'
+          }}
+        </p>
+        <div class="form-shell__modal-actions">
+          <button
+            type="button"
+            class="form-shell__button form-shell__button--ghost"
+            (click)="closeConfirmation()"
+          >
+            Go back
+          </button>
+          <button type="button" class="form-shell__button" (click)="confirmSubmit()">
+            Confirm
+          </button>
+        </div>
+      </section>
+    </div>

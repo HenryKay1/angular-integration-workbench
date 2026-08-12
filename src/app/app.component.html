@@ -1,0 +1,18 @@
+    <main class="shell">
+      <header class="shell__header">
+        <div>
+          <h1>Angular Integration Workbench</h1>
+          <p>Enterprise-flavored mock integration explorer</p>
+        </div>
+
+        <nav class="shell__nav">
+          <a routerLink="/" routerLinkActive="shell__link--active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
+          <a routerLink="/forms" routerLinkActive="shell__link--active">Forms</a>
+          <a routerLink="/records" routerLinkActive="shell__link--active">Records</a>
+        </nav>
+      </header>
+
+      <section class="shell__content">
+        <router-outlet />
+      </section>
+    </main>

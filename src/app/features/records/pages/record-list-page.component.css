@@ -1,0 +1,100 @@
+    .records-page {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .records-page__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .records-page__header h2,
+    .records-page__intro,
+    .records-page__count {
+      margin: 0;
+    }
+
+    .records-page__intro,
+    .records-page__count {
+      color: #52606d;
+    }
+
+    .record-preview {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .record-preview__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 1rem;
+    }
+
+    .record-preview__header h4,
+    .record-preview__summary,
+    .record-preview__payload h5 {
+      margin: 0;
+    }
+
+    .record-preview__eyebrow {
+      margin: 0 0 0.4rem;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #7b8794;
+    }
+
+    .record-preview__status {
+      padding: 0.4rem 0.75rem;
+      border-radius: 999px;
+      background: #d9e2ec;
+      color: #102a43;
+      font-weight: 700;
+    }
+
+    .record-preview__summary {
+      color: #52606d;
+    }
+
+    .record-preview__meta {
+      display: grid;
+      gap: 0.9rem;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      margin: 0;
+    }
+
+    .record-preview__meta div {
+      display: grid;
+      gap: 0.2rem;
+    }
+
+    .record-preview__meta dt {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #7b8794;
+    }
+
+    .record-preview__meta dd {
+      margin: 0;
+      color: #1f2933;
+    }
+
+    .record-preview__payload {
+      display: grid;
+      gap: 0.6rem;
+    }
+
+    .record-preview__payload pre {
+      margin: 0;
+      padding: 1rem;
+      overflow: auto;
+      border-radius: 0.75rem;
+      background: #102a43;
+      color: #f0f4f8;
+      font-size: 0.85rem;
+    }

@@ -11,130 +11,8 @@ import { FormShellComponent } from '../../../shared/components/form-shell/form-s
   selector: 'aiw-form-foundation-demo-page',
   standalone: true,
   imports: [CommonModule, JsonPipe, FormShellComponent],
-  template: `
-    <section class="forms-page">
-      <header class="forms-page__header">
-        <div>
-          <p class="forms-page__eyebrow">Reusable Form Foundation</p>
-          <h2>Phase 0 through 3 workbench</h2>
-          <p class="forms-page__intro">
-            This demo keeps the new form shell decoupled from records save logic while
-            proving contracts, layouts, reactive form generation, confirmation flow,
-            searchable dropdown behavior, image-header editing, and flexible file uploads.
-          </p>
-        </div>
-      </header>
-
-      <section class="forms-page__grid">
-        <article class="forms-page__panel">
-          <div class="forms-page__panel-header">
-            <h3>Simple Layout</h3>
-            <p>Flat config with standard fields, dropdown search, a single image header, and file upload metadata.</p>
-          </div>
-
-          <aiw-form-shell
-            [config]="simpleFormConfig"
-            [initialValue]="simpleInitialValue"
-            submitLabel="Preview submit"
-            (submitForm)="lastSimpleSubmission = $event"
-            (cancelForm)="simpleCancelCount = simpleCancelCount + 1"
-          />
-        </article>
-
-        <article class="forms-page__panel">
-          <div class="forms-page__panel-header">
-            <h3>Sectioned Layout</h3>
-            <p>Top-level sections, dropdown custom entry, confirmation flow, and multiple file attachments.</p>
-          </div>
-
-          <aiw-form-shell
-            [config]="sectionedFormConfig"
-            [initialValue]="sectionedInitialValue"
-            submitLabel="Submit sectioned form"
-            (submitForm)="lastSectionedSubmission = $event"
-            (cancelForm)="sectionedCancelCount = sectionedCancelCount + 1"
-          />
-        </article>
-      </section>
-
-      <section class="forms-page__results">
-        <article class="forms-page__result-card">
-          <h3>Simple Layout Output</h3>
-          <p>Cancel clicks: {{ simpleCancelCount }}</p>
-          <pre>{{ lastSimpleSubmission || emptyState | json }}</pre>
-        </article>
-
-        <article class="forms-page__result-card">
-          <h3>Sectioned Layout Output</h3>
-          <p>Cancel clicks: {{ sectionedCancelCount }}</p>
-          <pre>{{ lastSectionedSubmission || emptyState | json }}</pre>
-        </article>
-      </section>
-    </section>
-  `,
-  styles: [`
-    .forms-page {
-      display: grid;
-      gap: 1.25rem;
-    }
-
-    .forms-page__header,
-    .forms-page__panel,
-    .forms-page__result-card {
-      padding: 1.25rem;
-      border-radius: 1rem;
-      border: 1px solid #d9e2ec;
-      background: #ffffff;
-      box-shadow: 0 14px 36px rgba(15, 23, 42, 0.06);
-    }
-
-    .forms-page__eyebrow {
-      margin: 0 0 0.5rem;
-      color: #0f766e;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-size: 0.75rem;
-      font-weight: 700;
-    }
-
-    .forms-page__header h2,
-    .forms-page__header p,
-    .forms-page__panel-header h3,
-    .forms-page__panel-header p,
-    .forms-page__result-card h3,
-    .forms-page__result-card p,
-    .forms-page__result-card pre {
-      margin: 0;
-    }
-
-    .forms-page__intro,
-    .forms-page__panel-header p,
-    .forms-page__result-card p {
-      color: #52606d;
-    }
-
-    .forms-page__grid,
-    .forms-page__results {
-      display: grid;
-      gap: 1rem;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    }
-
-    .forms-page__panel,
-    .forms-page__result-card {
-      display: grid;
-      gap: 1rem;
-    }
-
-    .forms-page__result-card pre {
-      padding: 1rem;
-      overflow: auto;
-      border-radius: 0.75rem;
-      background: #102a43;
-      color: #f0f4f8;
-      font-size: 0.85rem;
-    }
-  `]
+  templateUrl: './form-foundation-demo-page.component.html',
+  styleUrl: './form-foundation-demo-page.component.css'
 })
 export class FormFoundationDemoPageComponent {
   protected readonly emptyState = { message: 'Submit a form to inspect the payload.' };
@@ -157,6 +35,7 @@ export class FormFoundationDemoPageComponent {
     goLiveDate: '2026-05-15',
     notifyStakeholders: true,
     heroImage: null,
+    profileImage: null,
     supportingDoc: null
   };
 
@@ -180,6 +59,21 @@ export class FormFoundationDemoPageComponent {
     fieldsPerLine: 3,
     fieldSpacing: '1rem',
     fields: [
+        {
+        key: 'profileImage',
+        label: 'Profile image',
+        type: 'image-crop',
+        required: false,
+        accept: 'image/*',
+        shape: 'circle',
+        frameSizePx: 80,
+        minFrameSizePx: 72,
+        maxFrameSizePx: 360,
+        rectangleAspectRatio: '4 / 3',
+        showFrame: true,
+        align: 'left',
+        colSpan: 3
+      },
       {
         key: 'title',
         label: 'Title',
@@ -229,22 +123,23 @@ export class FormFoundationDemoPageComponent {
         type: 'date',
         required: true
       },
-      {
-        key: 'heroImage',
-        label: 'Image header',
-        type: 'image-header',
-        required: false,
-        accept: 'image/*',
-        profileType: false,
-        shape: 'circle',
-        size: 'md',
-        frameSizePx: 80,
-        defaultPosition: 'center',
-        multiple: true,
-        showLabels: true,
-        helperText: 'Supports optional validation, shared label display, multiple images, and horizontal scrolling when the header runs out of space.',
-        colSpan: 2
-      },
+      // {
+      //   key: 'heroImage',
+      //   label: 'Image header',
+      //   type: 'image-header',
+      //   required: false,
+      //   accept: 'image/*',
+      //   profileType: false,
+      //   shape: 'circle',
+      //   size: 'md',
+      //   frameSizePx: 80,
+      //   defaultPosition: 'center',
+      //   multiple: true,
+      //   showLabels: true,
+      //   helperText: 'Supports optional validation, shared label display, multiple images, and horizontal scrolling when the header runs out of space.',
+      //   colSpan: 2
+      // },
+    
       {
         key: 'supportingDoc',
         label: 'Supporting file',

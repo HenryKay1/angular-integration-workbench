@@ -1,0 +1,67 @@
+    <section class="records-page" *ngIf="viewModel$ | async as viewModel">
+      <div class="records-page__header">
+        <div>
+          <h2>Records</h2>
+          <p class="records-page__intro">
+            Mock-backed integration records loaded through the shared record service.
+          </p>
+        </div>
+
+        <p class="records-page__count" *ngIf="!viewModel.isLoading">
+          {{ viewModel.records.length }} total record(s)
+        </p>
+      </div>
+
+      <aiw-data-view
+        [items]="viewModel.records"
+        [columns]="columns"
+        [cardConfig]="cardConfig"
+        [searchFields]="searchFields"
+        [itemLink]="recordLink"
+        [isLoading]="viewModel.isLoading"
+        [detailTemplate]="recordDetailTemplate"
+        initialSortColumn="Updated"
+        initialSortDirection="desc"
+        searchPlaceholder="Search by title, owner, category, or status"
+        emptyMessage="No records are available."
+        noResultsMessage="No records match the current search."
+      />
+
+      <ng-template #recordDetailTemplate let-record let-mode="mode">
+        <section class="record-preview">
+          <div class="record-preview__header">
+            <div>
+              <p class="record-preview__eyebrow">{{ mode === 'grid' ? 'Quick preview' : 'Inline detail' }}</p>
+              <h4>{{ record.title }}</h4>
+            </div>
+            <span class="record-preview__status">{{ record.status }}</span>
+          </div>
+
+          <p class="record-preview__summary">{{ record.summary }}</p>
+
+          <dl class="record-preview__meta">
+            <div>
+              <dt>Owner</dt>
+              <dd>{{ record.owner }}</dd>
+            </div>
+            <div>
+              <dt>Category</dt>
+              <dd>{{ record.category }}</dd>
+            </div>
+            <div>
+              <dt>Created</dt>
+              <dd>{{ formatDate(record.createdAt) }}</dd>
+            </div>
+            <div>
+              <dt>Updated</dt>
+              <dd>{{ formatDate(record.updatedAt) }}</dd>
+            </div>
+          </dl>
+
+          <div class="record-preview__payload">
+            <h5>Current payload</h5>
+            <pre>{{ record.currentPayload | json }}</pre>
+          </div>
+        </section>
+      </ng-template>
+    </section>

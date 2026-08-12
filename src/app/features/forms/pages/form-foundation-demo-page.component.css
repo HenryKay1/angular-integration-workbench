@@ -1,0 +1,61 @@
+    .forms-page {
+      display: grid;
+      gap: 1.25rem;
+    }
+
+    .forms-page__header,
+    .forms-page__panel,
+    .forms-page__result-card {
+      padding: 1.25rem;
+      border-radius: 1rem;
+      border: 1px solid #d9e2ec;
+      background: #ffffff;
+      box-shadow: 0 14px 36px rgba(15, 23, 42, 0.06);
+    }
+
+    .forms-page__eyebrow {
+      margin: 0 0 0.5rem;
+      color: #0f766e;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .forms-page__header h2,
+    .forms-page__header p,
+    .forms-page__panel-header h3,
+    .forms-page__panel-header p,
+    .forms-page__result-card h3,
+    .forms-page__result-card p,
+    .forms-page__result-card pre {
+      margin: 0;
+    }
+
+    .forms-page__intro,
+    .forms-page__panel-header p,
+    .forms-page__result-card p {
+      color: #52606d;
+    }
+
+    .forms-page__grid,
+    .forms-page__results {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    }
+
+    .forms-page__panel,
+    .forms-page__result-card {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .forms-page__result-card pre {
+      padding: 1rem;
+      overflow: auto;
+      border-radius: 0.75rem;
+      background: #102a43;
+      color: #f0f4f8;
+      font-size: 0.85rem;
+    }

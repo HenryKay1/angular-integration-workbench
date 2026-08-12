@@ -1,0 +1,156 @@
+    <section class="data-view">
+      <div class="data-view__toolbar">
+        <label class="data-view__search">
+          <span>Search</span>
+          <input
+            type="search"
+            [placeholder]="searchPlaceholder"
+            [(ngModel)]="searchTerm"
+          />
+        </label>
+
+        <div *ngIf="availableViewModes.length > 1" class="data-view__modes">
+          <button
+            *ngFor="let mode of availableViewModes"
+            type="button"
+            [class.data-view__mode--active]="mode === selectedViewMode"
+            (click)="selectedViewMode = mode"
+          >
+            {{ mode === 'grid' ? 'Grid' : 'Table' }}
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="isLoading" class="data-view__state">
+        {{ loadingMessage }}
+      </div>
+
+      <ng-container *ngIf="!isLoading">
+        <div *ngIf="filteredItems.length === 0" class="data-view__state">
+          {{ searchTerm.trim() ? noResultsMessage : emptyMessage }}
+        </div>
+
+        <ng-container *ngIf="filteredItems.length > 0">
+          <div *ngIf="selectedViewMode === 'grid'" class="data-view__grid">
+            <article
+              *ngFor="let item of processedItems"
+              class="data-view__card"
+              tabindex="0"
+              (click)="activateItem(item)"
+              (keydown.enter)="activateItem(item)"
+            >
+              <div class="data-view__card-top">
+                <span *ngIf="cardConfig.eyebrow" class="data-view__eyebrow">
+                  {{ cardConfig.eyebrow(item) }}
+                </span>
+              </div>
+
+              <h3>{{ cardConfig.title(item) }}</h3>
+              <p *ngIf="cardConfig.description">{{ cardConfig.description(item) }}</p>
+
+              <dl *ngIf="cardConfig.fields?.length" class="data-view__card-fields">
+                <div *ngFor="let field of cardConfig.fields">
+                  <dt>{{ field.label }}</dt>
+                  <dd>{{ field.value(item) }}</dd>
+                </div>
+              </dl>
+
+              <button
+                *ngIf="detailTemplate"
+                type="button"
+                class="data-view__detail-trigger"
+                (click)="openDetails(item, 'grid'); $event.stopPropagation()"
+              >
+                View more
+              </button>
+            </article>
+          </div>
+
+          <div *ngIf="selectedViewMode === 'table'" class="data-view__table-wrap">
+            <table class="data-view__table">
+              <thead>
+                <tr>
+                  <th *ngIf="detailTemplate" class="data-view__expander-header" scope="col">
+                    <span class="data-view__sr-only">Expand row</span>
+                  </th>
+                  <th *ngFor="let column of columns" scope="col">
+                    <button
+                      *ngIf="column.sortable; else staticHeader"
+                      type="button"
+                      class="data-view__sort-button"
+                      (click)="toggleSort(column)"
+                    >
+                      <span>{{ column.header }}</span>
+                      <span class="data-view__sort-indicator">
+                        {{ getSortIndicator(column) }}
+                      </span>
+                    </button>
+
+                    <ng-template #staticHeader>{{ column.header }}</ng-template>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <ng-container *ngFor="let item of processedItems">
+                  <tr
+                    tabindex="0"
+                    (click)="activateItem(item)"
+                    (keydown.enter)="activateItem(item)"
+                  >
+                    <td *ngIf="detailTemplate" class="data-view__expander-cell">
+                      <button
+                        type="button"
+                        class="data-view__expander-button"
+                        [attr.aria-label]="expandedItem === item ? 'Collapse row details' : 'Expand row details'"
+                        (click)="toggleInlineDetails(item); $event.stopPropagation()"
+                      >
+                        {{ expandedItem === item ? '▾' : '▸' }}
+                      </button>
+                    </td>
+                    <td *ngFor="let column of columns">{{ column.value(item) }}</td>
+                  </tr>
+                  <tr
+                    *ngIf="detailTemplate && expandedItem === item"
+                    class="data-view__detail-row"
+                  >
+                    <td [attr.colspan]="columns.length + 1">
+                      <div class="data-view__detail-panel">
+                        <ng-container
+                          *ngTemplateOutlet="detailTemplate; context: getDetailContext(item, 'table')"
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                </ng-container>
+              </tbody>
+            </table>
+          </div>
+        </ng-container>
+      </ng-container>
+
+      <div
+        *ngIf="detailTemplate && detailModalItem"
+        class="data-view__modal-backdrop"
+        (click)="closeDetails()"
+      >
+        <section
+          class="data-view__modal"
+          (click)="$event.stopPropagation()"
+        >
+          <div class="data-view__modal-header">
+            <h3>Record detail</h3>
+            <button
+              type="button"
+              class="data-view__modal-close"
+              (click)="closeDetails()"
+            >
+              Close
+            </button>
+          </div>
+
+          <ng-container
+            *ngTemplateOutlet="detailTemplate; context: getDetailContext(detailModalItem, 'grid')"
+          />
+        </section>
+      </div>
+    </section>

@@ -1,0 +1,212 @@
+    .file-upload {
+      display: grid;
+      gap: 0.9rem;
+      min-width: 0;
+    }
+
+    .file-upload--disabled {
+      opacity: 0.72;
+    }
+
+    .file-upload__toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .file-upload__pick-button {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.8rem 1rem;
+      border: 1px solid #0f766e;
+      border-radius: 0.8rem;
+      background: #f0fdfa;
+      color: #134e4a;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+      overflow: hidden;
+    }
+
+    .file-upload__native-input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .file-upload__meta,
+    .file-upload__empty {
+      margin: 0;
+      color: #52606d;
+      font-size: 0.92rem;
+    }
+
+    .file-upload__list {
+      display: grid;
+      gap: 0.85rem;
+    }
+
+    .file-upload__card {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 0.9rem;
+      align-items: start;
+      padding: 0.95rem;
+      border: 1px solid #d9e2ec;
+      border-radius: 0.9rem;
+      background: #f8fafc;
+    }
+
+    .file-upload__badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 3.5rem;
+      padding: 0.55rem 0.65rem;
+      border-radius: 0.7rem;
+      background: #102a43;
+      color: #f0f4f8;
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+    }
+
+    .file-upload__details,
+    .file-upload__field,
+    .file-upload__copy {
+      display: grid;
+      gap: 0.35rem;
+      min-width: 0;
+    }
+
+    .file-upload__field {
+      color: #243b53;
+      font-weight: 600;
+    }
+
+    .file-upload__field input {
+      width: 100%;
+      padding: 0.75rem 0.9rem;
+      border: 1px solid #bcccdc;
+      border-radius: 0.7rem;
+      background: #ffffff;
+      color: #102a43;
+      font: inherit;
+    }
+
+    .file-upload__copy strong,
+    .file-upload__copy span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-upload__copy strong {
+      color: #102a43;
+    }
+
+    .file-upload__copy span {
+      color: #52606d;
+      font-size: 0.9rem;
+    }
+
+    .file-upload__actions {
+      display: flex;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .file-upload__action {
+      border: 0;
+      border-radius: 999px;
+      padding: 0.6rem 0.9rem;
+      background: #0f766e;
+      color: #ffffff;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+    }
+
+    .file-upload__action--ghost {
+      border: 1px solid #bcccdc;
+      background: #ffffff;
+      color: #102a43;
+    }
+
+    .file-upload__modal-backdrop {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 1.5rem;
+      background: rgba(15, 23, 42, 0.45);
+      z-index: 1000;
+    }
+
+    .file-upload__modal {
+      width: min(100%, 60rem);
+      max-height: min(90vh, 50rem);
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 1rem;
+      padding: 1.25rem;
+      border-radius: 1rem;
+      background: #ffffff;
+      box-shadow: 0 32px 80px rgba(15, 23, 42, 0.24);
+    }
+
+    .file-upload__modal-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .file-upload__modal-header h3,
+    .file-upload__modal-header p {
+      margin: 0;
+    }
+
+    .file-upload__modal-header p {
+      color: #52606d;
+    }
+
+    .file-upload__modal-body {
+      min-height: 16rem;
+      overflow: auto;
+      border-radius: 0.85rem;
+      background: #f8fafc;
+    }
+
+    .file-upload__modal-body img,
+    .file-upload__modal-body object {
+      width: 100%;
+      min-height: 24rem;
+      display: block;
+      border: 0;
+    }
+
+    .file-upload__modal-body pre {
+      margin: 0;
+      padding: 1rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #102a43;
+      font: inherit;
+    }
+
+    @media (max-width: 720px) {
+      .file-upload__card {
+        grid-template-columns: 1fr;
+      }
+
+      .file-upload__actions {
+        justify-content: start;
+      }
+    }

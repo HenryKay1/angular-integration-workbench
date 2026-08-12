@@ -1,0 +1,78 @@
+    <ng-container *ngIf="viewModel$ | async as viewModel">
+      <section *ngIf="viewModel.record; else notFound" class="record-detail">
+        <a class="record-detail__back" routerLink="/records">Back to records</a>
+
+        <header class="record-detail__header">
+          <div>
+            <p class="record-detail__eyebrow">{{ viewModel.record.category }}</p>
+            <h2>{{ viewModel.record.title }}</h2>
+            <p>{{ viewModel.record.summary }}</p>
+          </div>
+
+          <div class="record-detail__status">{{ viewModel.record.status }}</div>
+        </header>
+
+        <section class="record-detail__grid">
+          <article class="record-panel">
+            <h3>Overview</h3>
+            <dl class="record-overview">
+              <div>
+                <dt>Owner</dt>
+                <dd>{{ viewModel.record.owner }}</dd>
+              </div>
+              <div>
+                <dt>Created</dt>
+                <dd>{{ viewModel.record.createdAt | date: 'medium' }}</dd>
+              </div>
+              <div>
+                <dt>Updated</dt>
+                <dd>{{ viewModel.record.updatedAt | date: 'medium' }}</dd>
+              </div>
+            </dl>
+          </article>
+
+          <article class="record-panel">
+            <h3>Current Payload</h3>
+            <pre>{{ viewModel.record.currentPayload | json }}</pre>
+          </article>
+        </section>
+
+        <section class="record-panel">
+          <div class="record-detail__history-header">
+            <h3>History</h3>
+            <span>{{ viewModel.history.length }} event(s)</span>
+          </div>
+
+          <p *ngIf="viewModel.history.length === 0" class="record-detail__empty">
+            No history entries are available for this record.
+          </p>
+
+          <div *ngIf="viewModel.history.length > 0" class="history-list">
+            <a
+              *ngFor="let entry of viewModel.history"
+              class="history-entry"
+              [routerLink]="['/records', viewModel.record.id, 'history', entry.id]"
+            >
+              <div>
+                <strong>{{ entry.eventType }}</strong>
+                <p>{{ entry.notes || 'No additional notes provided.' }}</p>
+              </div>
+              <div class="history-entry__meta">
+                <span>{{ entry.changedBy }}</span>
+                <span>{{ entry.changedAt | date: 'medium' }}</span>
+              </div>
+            </a>
+          </div>
+        </section>
+      </section>
+    </ng-container>
+
+    <ng-template #notFound>
+      <section class="record-detail">
+        <a class="record-detail__back" routerLink="/records">Back to records</a>
+        <div class="record-panel">
+          <h2>Record not found</h2>
+          <p>The requested record id did not match any mock-backed record.</p>
+        </div>
+      </section>
+    </ng-template>

@@ -1,0 +1,531 @@
+    <div class="image-header" [class.image-header--disabled]="disabled">
+      <div
+        class="image-header__surface"
+        [class.image-header__surface--left]="groupPosition === 'left'"
+        [class.image-header__surface--center]="groupPosition === 'center'"
+        [class.image-header__surface--right]="groupPosition === 'right'"
+      >
+        <div class="image-header__actions">
+          <button
+            type="button"
+            class="image-header__action-button"
+            [disabled]="disabled"
+            title="Add image"
+            aria-label="Add image"
+            (click)="openAddEditor()"
+          >
+            <ng-container *ngTemplateOutlet="uploadIcon"></ng-container>
+          </button>
+        </div>
+
+        <div class="image-header__content">
+          <div class="image-header__strip-shell" *ngIf="visibleItems.length > 0; else emptySurface">
+            <ng-container *ngIf="groupDisplayMode === 'slideshow'; else scrollRail">
+              <div class="image-header__slideshow">
+                <div class="image-header__slide-viewport">
+                  <div class="image-header__strip image-header__strip--page" [attr.data-page]="displayPageIndex">
+                    <article
+                      *ngFor="let item of activeDisplayItems; let index = index; trackBy: trackItemById"
+                      class="image-header__tile"
+                    >
+                      <ng-container *ngTemplateOutlet="imageTile; context: { item: item }"></ng-container>
+                    </article>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+
+            <ng-template #scrollRail>
+              <div #stripScroll class="image-header__strip-scroll">
+                <div class="image-header__strip">
+                  <article
+                    *ngFor="let item of visibleItems; let index = index; trackBy: trackItemById"
+                    class="image-header__tile"
+                  >
+                    <ng-container *ngTemplateOutlet="imageTile; context: { item: item }"></ng-container>
+                  </article>
+                </div>
+              </div>
+            </ng-template>
+          </div>
+
+          <ng-template #emptySurface>
+            <div class="image-header__strip-shell">
+              <article class="image-header__tile image-header__tile--default">
+                <div class="image-header__canvas image-header__canvas--default">
+                  <img
+                    class="image-header__placeholder-image"
+                    [src]="placeholderImageSrc"
+                    alt="Image placeholder"
+                  />
+                </div>
+              </article>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #imageTile let-item="item">
+      <div class="image-header__canvas-shell">
+        <div
+          class="image-header__canvas"
+          [class.image-header__canvas--circle]="groupShape === 'circle'"
+          [class.image-header__canvas--square]="groupShape === 'square'"
+          [class.image-header__canvas--triangle]="groupShape === 'triangle'"
+          [style.--image-header-frame-size]="groupFrameSizePx + 'px'"
+        >
+          <img
+            class="image-header__image"
+            [src]="item.previewUrl"
+            [alt]="item.originalName || 'Selected image'"
+            [style.transform]="getImageTransform(item)"
+          />
+
+          <div class="image-header__overlay-panel">
+            <button
+              type="button"
+              class="image-header__icon-button"
+              [disabled]="disabled"
+              title="Manage Image"
+              aria-label="Open image actions"
+              (click)="openEditor(findItemIndex(item.id))"
+            >
+              <ng-container *ngTemplateOutlet="editIcon"></ng-container>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <p
+        *ngIf="showLabels && resolvedLabel(item) as label"
+        class="image-header__caption"
+        [title]="label"
+      >
+        {{ label }}
+      </p>
+    </ng-template>
+
+    <div
+      *ngIf="isEditorOpen"
+      class="image-header__modal-backdrop"
+      (click)="closeEditor()"
+    >
+      <section class="image-header__modal" (click)="$event.stopPropagation()">
+        <header class="image-header__modal-header">
+          <h3>{{ activeIndex === null ? 'Add image header' : 'Update image header' }}</h3>
+          <button
+            type="button"
+            class="image-header__action image-header__action--ghost"
+            (click)="closeEditor()"
+          >
+            Close
+          </button>
+        </header>
+
+        <div class="image-header__modal-body">
+          <div class="image-header__modal-preview">
+            <div class="image-header__preview-frame">
+              <div
+                class="image-header__canvas"
+                [class.image-header__canvas--empty-preview]="!activeEditorItem"
+                [class.image-header__canvas--circle]="activeEditorItem && editorShape === 'circle'"
+                [class.image-header__canvas--square]="activeEditorItem && editorShape === 'square'"
+                [class.image-header__canvas--triangle]="activeEditorItem && editorShape === 'triangle'"
+                [style.--image-header-frame-size]="activeEditorItem ? editorPreviewFrameSizePx + 'px' : null"
+              >
+                <ng-container *ngIf="activeEditorItem as activeItem; else editorEmptyState">
+                  <img
+                    class="image-header__image"
+                    [src]="activeItem.previewUrl"
+                    [alt]="activeItem.originalName || 'Selected image'"
+                    [style.transform]="getImageTransform(activeItem)"
+                  />
+                </ng-container>
+
+                <ng-template #editorEmptyState>
+                  <img
+                    class="image-header__placeholder-image"
+                    [src]="placeholderImageSrc"
+                    alt="Image Preview"
+                  />
+                </ng-template>
+              </div>
+            </div>
+
+            <div class="image-header__thumb-rail" *ngIf="editorItems.length > 0">
+              <button
+                *ngFor="let item of editorItems; let index = index; trackBy: trackItemById"
+                type="button"
+                class="image-header__thumb"
+                [class.image-header__thumb--active]="activeIndex === index"
+                (click)="selectEditorItem(index)"
+              >
+                <img [src]="item.previewUrl" [alt]="item.originalName || 'Image'" />
+              </button>
+
+            </div>
+          </div>
+
+          <div class="image-header__editor-form">
+            <section class="image-header__editor-section">
+              <header class="image-header__section-header">
+                <h4>Image</h4>
+              </header>
+
+              <div class="image-header__field">
+                <div class="image-header__upload-row">
+                  <label class="image-header__mode-toggle">
+                    <input
+                      type="checkbox"
+                      [disabled]="disabled"
+                      [ngModel]="allowMultiple"
+                      (ngModelChange)="updateMode($event)"
+                    />
+                    <span>Multi</span>
+                  </label>
+
+                  <input
+                    type="text"
+                    class="image-header__assigned-input"
+                    [disabled]="disabled || !activeEditorItem"
+                    [ngModel]="activeEditorItem?.assignedName || pendingAssignedName"
+                    (ngModelChange)="updateAssignedName($event)"
+                    placeholder="Display Name"
+                  />
+
+                  <label
+                    class="image-header__upload-button"
+                    [class.image-header__upload-button--disabled]="disabled || (allowMultiple && activeIndex === null)"
+                  >
+                    <input
+                      type="file"
+                      class="image-header__native-input"
+                      [attr.accept]="accept || 'image/*'"
+                      [disabled]="disabled || (allowMultiple && activeIndex === null)"
+                      (change)="handleReplaceSelection($event)"
+                    />
+                    <span>{{ replaceButtonLabel }}</span>
+                    <ng-container *ngTemplateOutlet="replaceIcon"></ng-container>
+                  </label>
+
+                  <label
+                    *ngIf="allowMultiple"
+                    class="image-header__upload-button"
+                    [class.image-header__upload-button--disabled]="disabled || !canAddMore"
+                  >
+                    <input
+                      type="file"
+                      class="image-header__native-input"
+                      [attr.accept]="accept || 'image/*'"
+                      multiple
+                      [disabled]="disabled || !canAddMore"
+                      (change)="handleAddSelection($event)"
+                    />
+                    <span>Add</span>
+                    <ng-container *ngTemplateOutlet="addIcon"></ng-container>
+                  </label>
+
+                  <button
+                    *ngIf="activeIndex !== null"
+                    type="button"
+                    class="image-header__upload-button image-header__upload-button--danger"
+                    [disabled]="disabled"
+                    (click)="deleteImage()"
+                  >
+                    <span>Delete</span>
+                    <ng-container *ngTemplateOutlet="deleteIcon"></ng-container>
+                  </button>
+                </div>
+              </div>
+
+              <div class="image-header__editor-meta">
+                <article class="image-header__meta-card">
+                  <strong>fileName</strong>
+                  <span [title]="activeEditorItem?.originalName || 'No image selected'">{{ activeEditorItem?.originalName || 'No image selected' }}</span>
+                </article>
+                <article class="image-header__meta-card">
+                  <strong>Extension</strong>
+                  <span>{{ activeEditorItem?.extension || 'IMG' }}</span>
+                </article>
+                <article class="image-header__meta-card">
+                  <strong>Size</strong>
+                  <span>{{ activeEditorItem?.sizeBytes ? formatFileSize(activeEditorItem!.sizeBytes) : '0 B' }}</span>
+                </article>
+              </div>
+            </section>
+
+            <section class="image-header__editor-section">
+              <header class="image-header__section-header">
+                <h4>Layout</h4>
+              </header>
+
+              <div class="image-header__settings-row">
+                <label class="image-header__field">
+                  <span class="image-header__field-label">
+                    Position
+                    <ng-container
+                      *ngTemplateOutlet="infoIcon; context: { title: 'Controls where the saved image header appears in the form surface.' }"
+                    ></ng-container>
+                  </span>
+                  <select
+                    [disabled]="disabled"
+                    [ngModel]="editorPosition"
+                    (ngModelChange)="updateDraftPosition($event)"
+                  >
+                    <option value="left">Left</option>
+                    <option value="center">Middle</option>
+                    <option value="right">Right</option>
+                  </select>
+                </label>
+
+                <label class="image-header__field">
+                  <span class="image-header__field-label">
+                    Shape
+                    <ng-container
+                      *ngTemplateOutlet="infoIcon; context: { title: 'Applies the selected mask shape to the saved image header.' }"
+                    ></ng-container>
+                  </span>
+                  <select
+                    [disabled]="disabled"
+                    [ngModel]="editorShape"
+                    (ngModelChange)="updateDraftShape($event)"
+                  >
+                    <option value="circle">Circle</option>
+                    <option value="rectangle">Rectangle</option>
+                    <option value="square">Square</option>
+                    <option value="triangle">Triangle</option>
+                  </select>
+                </label>
+
+                <label class="image-header__field">
+                  <span class="image-header__field-label">
+                    Frame size
+                    <ng-container
+                      *ngTemplateOutlet="infoIcon; context: { title: 'Sets the rendered header frame size and applies it to every image in this header.' }"
+                    ></ng-container>
+                  </span>
+                  <div class="image-header__slider-field">
+                    <input
+                      type="range"
+                      min="48"
+                      max="128"
+                      step="4"
+                      [disabled]="disabled"
+                      [ngModel]="editorFrameSizePx"
+                      (ngModelChange)="updateDraftFrameSize($event)"
+                    />
+                    <span>{{ editorFrameSizePx }}px</span>
+                  </div>
+                </label>
+              </div>
+
+              <div class="image-header__settings-row">
+                <label class="image-header__field">
+                  <span class="image-header__field-label">
+                    Display
+                    <ng-container
+                      *ngTemplateOutlet="infoIcon; context: { title: 'Keeps the saved image header scrollable, or pages it as a slideshow.' }"
+                    ></ng-container>
+                  </span>
+                  <select
+                    [disabled]="disabled"
+                    [ngModel]="editorDisplayMode"
+                    (ngModelChange)="updateDraftDisplayMode($event)"
+                  >
+                    <option value="scroll">Scrollable</option>
+                    <option value="slideshow">Slideshow</option>
+                  </select>
+                </label>
+
+                <label class="image-header__field">
+                  <span class="image-header__field-label">
+                    Per page
+                    <ng-container
+                      *ngTemplateOutlet="infoIcon; context: { title: 'Sets how many images appear in each slideshow page.' }"
+                    ></ng-container>
+                  </span>
+                  <select
+                    [disabled]="disabled || editorDisplayMode !== 'slideshow'"
+                    [ngModel]="editorItemsPerPage"
+                    (ngModelChange)="updateDraftItemsPerPage($event)"
+                  >
+                    <option [ngValue]="1">1</option>
+                    <option [ngValue]="2">2</option>
+                    <option [ngValue]="3">3</option>
+                    <option [ngValue]="4">4</option>
+                    <option [ngValue]="5">5</option>
+                  </select>
+                </label>
+
+                <label class="image-header__field">
+                  <span class="image-header__field-label">
+                    Interval
+                    <ng-container
+                      *ngTemplateOutlet="infoIcon; context: { title: 'Sets how many seconds each slideshow page remains visible.' }"
+                    ></ng-container>
+                  </span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="60"
+                    step="1"
+                    [disabled]="disabled || editorDisplayMode !== 'slideshow'"
+                    [ngModel]="editorSlideshowIntervalSeconds"
+                    (ngModelChange)="updateDraftSlideshowInterval($event)"
+                  />
+                </label>
+              </div>
+            </section>
+
+            <section class="image-header__editor-section" *ngIf="activeEditorItem as cropItem">
+              <header class="image-header__section-header">
+                <h4>Crop</h4>
+                <button
+                  type="button"
+                  class="image-header__reset-button"
+                  [disabled]="disabled"
+                  title="Reset crop"
+                  aria-label="Reset crop"
+                  (click)="resetActiveCrop()"
+                >
+                  <span>Reset</span>
+                  <ng-container *ngTemplateOutlet="resetIcon"></ng-container>
+                </button>
+              </header>
+
+              <div class="image-header__settings-row">
+                <label class="image-header__field">
+                  <span class="image-header__field-label">
+                    Zoom
+                    <ng-container
+                      *ngTemplateOutlet="infoIcon; context: { title: 'Adjusts only the selected image inside the shared frame.' }"
+                    ></ng-container>
+                  </span>
+                  <div class="image-header__slider-field">
+                    <input
+                      type="range"
+                      min="0.5"
+                      max="3"
+                      step="0.05"
+                      [disabled]="disabled"
+                      [ngModel]="cropItem.crop?.zoom ?? 1"
+                      (ngModelChange)="updateActiveCrop('zoom', $event)"
+                    />
+                    <span>{{ formatZoom(cropItem.crop?.zoom ?? 1) }}</span>
+                  </div>
+                </label>
+
+                <label class="image-header__field">
+                  <span class="image-header__field-label">Horizontal</span>
+                  <div class="image-header__slider-field">
+                    <input
+                      type="range"
+                      min="-50"
+                      max="50"
+                      step="1"
+                      [disabled]="disabled"
+                      [ngModel]="cropItem.crop?.offsetX ?? 0"
+                      (ngModelChange)="updateActiveCrop('offsetX', $event)"
+                    />
+                    <span>{{ cropItem.crop?.offsetX ?? 0 }}%</span>
+                  </div>
+                </label>
+
+                <label class="image-header__field">
+                  <span class="image-header__field-label">Vertical</span>
+                  <div class="image-header__slider-field">
+                    <input
+                      type="range"
+                      min="-50"
+                      max="50"
+                      step="1"
+                      [disabled]="disabled"
+                      [ngModel]="cropItem.crop?.offsetY ?? 0"
+                      (ngModelChange)="updateActiveCrop('offsetY', $event)"
+                    />
+                    <span>{{ cropItem.crop?.offsetY ?? 0 }}%</span>
+                  </div>
+                </label>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <footer class="image-header__modal-actions">
+          <button
+            type="button"
+            class="image-header__action image-header__action--ghost"
+            (click)="closeEditor()"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="image-header__action"
+            [disabled]="editorItems.length === 0"
+            (click)="saveEditor()"
+          >
+            Save image header
+          </button>
+        </footer>
+      </section>
+    </div>
+
+    <ng-template #editIcon>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="m4 20 4.5-1 9.25-9.25a1.75 1.75 0 0 0 0-2.5l-1-1a1.75 1.75 0 0 0-2.5 0L5 15.5 4 20Z" />
+        <path d="M13.5 7.5 16.5 10.5" />
+      </svg>
+    </ng-template>
+
+    <ng-template #uploadIcon>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 16V8" />
+        <path d="M8.5 11.5 12 8l3.5 3.5" />
+        <path d="M5 15.5v2A1.5 1.5 0 0 0 6.5 19h11a1.5 1.5 0 0 0 1.5-1.5v-2" />
+      </svg>
+    </ng-template>
+
+    <ng-template #replaceIcon>
+      <svg class="image-header__button-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 7h10a5 5 0 0 1 0 10H9" />
+        <path d="m7 13-3 4 3 4" />
+        <path d="M20 5v6" />
+        <path d="M17 8h6" />
+      </svg>
+    </ng-template>
+
+    <ng-template #addIcon>
+      <svg class="image-header__button-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 5v14" />
+        <path d="M5 12h14" />
+      </svg>
+    </ng-template>
+
+    <ng-template #deleteIcon>
+      <svg class="image-header__button-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 7h16" />
+        <path d="M10 11v6" />
+        <path d="M14 11v6" />
+        <path d="M6 7l1 13h10l1-13" />
+        <path d="M9 7V4h6v3" />
+      </svg>
+    </ng-template>
+
+    <ng-template #resetIcon>
+      <svg class="image-header__button-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 3v6h6" />
+        <path d="M3 12a9 9 0 1 0 3-6.7L3 9" />
+      </svg>
+    </ng-template>
+
+    <ng-template #infoIcon let-title="title">
+      <span class="image-header__tooltip-icon" [title]="title" aria-label="Field information">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 17v-5" />
+          <path d="M12 8h.01" />
+          <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" />
+        </svg>
+      </span>
+    </ng-template>

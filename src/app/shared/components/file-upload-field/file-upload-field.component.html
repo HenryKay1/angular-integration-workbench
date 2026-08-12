@@ -1,0 +1,107 @@
+    <div class="file-upload" [class.file-upload--disabled]="disabled">
+      <div class="file-upload__toolbar">
+        <label class="file-upload__pick-button">
+          <input
+            type="file"
+            class="file-upload__native-input"
+            [attr.accept]="accept || null"
+            [attr.multiple]="multiple ? '' : null"
+            [disabled]="disabled || reachedMaxFiles"
+            (change)="handleFileSelection($event)"
+          />
+          <span>{{ reachedMaxFiles ? 'Max files reached' : pickButtonLabel }}</span>
+        </label>
+
+        <p class="file-upload__meta" *ngIf="items.length > 0">
+          {{ items.length }} file(s) ready
+        </p>
+      </div>
+
+      <p *ngIf="items.length === 0" class="file-upload__empty">
+        No files selected yet.
+      </p>
+
+      <div class="file-upload__list" *ngIf="items.length > 0">
+        <article
+          *ngFor="let item of items; trackBy: trackItemById"
+          class="file-upload__card"
+        >
+          <div class="file-upload__badge">{{ item.extension || 'FILE' }}</div>
+
+          <div class="file-upload__details">
+            <label class="file-upload__field" *ngIf="allowAssignedFilename">
+              <span>Assigned filename</span>
+              <input
+                type="text"
+                [disabled]="disabled"
+                [ngModel]="item.assignedName || item.originalName"
+                (ngModelChange)="updateAssignedName(item.id, $event)"
+              />
+            </label>
+
+            <div class="file-upload__copy">
+              <strong [title]="item.originalName">{{ item.originalName }}</strong>
+              <span>{{ item.mimeType || 'Unknown type' }} . {{ formatFileSize(item.sizeBytes) }}</span>
+            </div>
+          </div>
+
+          <div class="file-upload__actions">
+            <button
+              type="button"
+              class="file-upload__action"
+              [disabled]="disabled"
+              (click)="previewItem(item)"
+            >
+              Preview
+            </button>
+
+            <button
+              type="button"
+              class="file-upload__action file-upload__action--ghost"
+              [disabled]="disabled"
+              (click)="removeItem(item.id)"
+            >
+              Remove
+            </button>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <div
+      *ngIf="activePreview"
+      class="file-upload__modal-backdrop"
+      (click)="closePreview()"
+    >
+      <section class="file-upload__modal" (click)="$event.stopPropagation()">
+        <header class="file-upload__modal-header">
+          <div>
+            <h3 [title]="activePreview.originalName">{{ activePreview.originalName }}</h3>
+            <p>{{ activePreview.mimeType || 'Unknown type' }}</p>
+          </div>
+          <button
+            type="button"
+            class="file-upload__action file-upload__action--ghost"
+            (click)="closePreview()"
+          >
+            Close
+          </button>
+        </header>
+
+        <div class="file-upload__modal-body">
+          <img
+            *ngIf="isImage(activePreview)"
+            [src]="activePreview.previewUrl"
+            [alt]="activePreview.originalName"
+          />
+
+          <object
+            *ngIf="isPdf(activePreview)"
+            [data]="activePreview.previewUrl"
+            type="application/pdf"
+          ></object>
+
+          <pre *ngIf="isText(activePreview)">{{ activePreviewText }}</pre>
+        </div>
+      </section>
+    </div>

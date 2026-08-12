@@ -1,0 +1,68 @@
+    <div class="dropdown-field" [class.dropdown-field--disabled]="disabled">
+      <button
+        type="button"
+        class="dropdown-field__trigger"
+        [class.dropdown-field__trigger--open]="isOpen"
+        [class.dropdown-field__trigger--placeholder]="!hasSelection"
+        [disabled]="disabled"
+        (click)="toggleOpen()"
+        (blur)="handleBlur()"
+        [title]="triggerLabel"
+      >
+        <span class="dropdown-field__trigger-text">{{ triggerLabel }}</span>
+        <span class="dropdown-field__trigger-icon" aria-hidden="true">
+          <svg viewBox="0 0 20 20" focusable="false">
+            <path d="M5.25 7.5 10 12.25 14.75 7.5" />
+          </svg>
+        </span>
+      </button>
+
+      <div *ngIf="isOpen" class="dropdown-field__overlay">
+        <div class="dropdown-field__menu">
+          <label *ngIf="searchable" class="dropdown-field__search">
+            <span class="dropdown-field__sr-only">Search options</span>
+            <input
+              type="search"
+              [(ngModel)]="searchTerm"
+              placeholder="Search options"
+            />
+          </label>
+
+          <div class="dropdown-field__options">
+            <button
+              *ngFor="let option of filteredOptions"
+              type="button"
+              class="dropdown-field__option"
+              [class.dropdown-field__option--active]="selection?.selectedKey === option.value && !selection?.isOther"
+              (click)="selectOption(option)"
+              [title]="option.label"
+            >
+              <span class="dropdown-field__option-text">{{ option.label }}</span>
+            </button>
+
+            <p *ngIf="filteredOptions.length === 0" class="dropdown-field__empty">
+              No matching options.
+            </p>
+          </div>
+
+          <div *ngIf="allowOther" class="dropdown-field__other-row">
+            <input
+              type="text"
+              class="dropdown-field__other-input"
+              [(ngModel)]="otherDraft"
+              [placeholder]="otherPlaceholder"
+              [disabled]="disabled"
+              [title]="otherDraft || otherPlaceholder"
+            />
+            <button
+              type="button"
+              class="dropdown-field__other-button"
+              [disabled]="disabled || !otherDraft.trim()"
+              (click)="applyOtherValue()"
+            >
+              Use
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>

@@ -1,0 +1,138 @@
+    .record-detail {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .record-detail__back {
+      width: fit-content;
+      color: #0f172a;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .record-detail__header {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: start;
+      padding: 1.25rem;
+      border-radius: 0.75rem;
+      background: #ffffff;
+      border: 1px solid #d9e2ec;
+    }
+
+    .record-detail__header h2,
+    .record-detail__header p,
+    .record-detail__history-header h3 {
+      margin: 0;
+    }
+
+    .record-detail__eyebrow {
+      margin-bottom: 0.5rem;
+      color: #52606d;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 0.8rem;
+    }
+
+    .record-detail__status {
+      padding: 0.45rem 0.75rem;
+      border-radius: 999px;
+      background: #d9e2ec;
+      font-weight: 700;
+      color: #102a43;
+    }
+
+    .record-detail__grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    .record-panel {
+      display: grid;
+      gap: 1rem;
+      padding: 1.25rem;
+      border-radius: 0.75rem;
+      background: #ffffff;
+      border: 1px solid #d9e2ec;
+    }
+
+    .record-panel h3 {
+      margin: 0;
+    }
+
+    .record-overview {
+      display: grid;
+      gap: 0.9rem;
+      margin: 0;
+    }
+
+    .record-overview div {
+      display: grid;
+      gap: 0.25rem;
+    }
+
+    .record-overview dt {
+      color: #7b8794;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .record-overview dd {
+      margin: 0;
+    }
+
+    pre {
+      margin: 0;
+      padding: 1rem;
+      overflow: auto;
+      border-radius: 0.75rem;
+      background: #102a43;
+      color: #f0f4f8;
+      font-size: 0.875rem;
+    }
+
+    .record-detail__history-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .record-detail__empty {
+      margin: 0;
+      color: #52606d;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .history-entry {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem;
+      border-radius: 0.75rem;
+      background: #f8fafc;
+      color: inherit;
+      text-decoration: none;
+      border: 1px solid #d9e2ec;
+    }
+
+    .history-entry p {
+      margin: 0.35rem 0 0;
+      color: #52606d;
+    }
+
+    .history-entry__meta {
+      display: grid;
+      gap: 0.25rem;
+      min-width: 12rem;
+      text-align: right;
+      color: #52606d;
+      font-size: 0.9rem;
+    }
