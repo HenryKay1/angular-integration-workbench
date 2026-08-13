@@ -31,7 +31,6 @@ import {
   DropdownSelection,
   FormConfig,
   FormFieldConfig,
-  FormFieldSectionConfig,
   ImageCropValue,
   ImageHeaderFieldConfig,
   FormSectionConfig,
@@ -39,6 +38,10 @@ import {
   ImageHeaderValue,
   UploadedFileItem
 } from './form-config.model';
+
+interface ResolvedFormSection extends FormSectionConfig {
+  fields: FormFieldConfig[];
+}
 
 @Component({
   selector: 'aiw-form-shell',
@@ -119,7 +122,7 @@ export class FormShellComponent implements AfterViewInit, OnChanges, OnDestroy {
     return this.visibleFields.filter((field) => !field.section);
   }
 
-  protected get visibleSections(): FormSectionConfig[] {
+  protected get visibleSections(): ResolvedFormSection[] {
     return this.resolveSectionsFromFields().filter((section) => section.fields.length > 0);
   }
 
@@ -158,7 +161,7 @@ export class FormShellComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.gridChangesSubscription?.unsubscribe();
   }
 
-  protected getVisibleSectionFields(section: FormSectionConfig): FormFieldConfig[] {
+  protected getVisibleSectionFields(section: ResolvedFormSection): FormFieldConfig[] {
     return section.fields.filter((field) => !field.hidden && field.type !== 'image-header');
   }
 
@@ -171,7 +174,7 @@ export class FormShellComponent implements AfterViewInit, OnChanges, OnDestroy {
     requestAnimationFrame(() => this.observeFormGrids());
   }
 
-  protected trackSectionByKey(_: number, section: FormSectionConfig): string {
+  protected trackSectionByKey(_: number, section: ResolvedFormSection): string {
     return section.key;
   }
 
@@ -328,8 +331,15 @@ export class FormShellComponent implements AfterViewInit, OnChanges, OnDestroy {
     return this.config.fields ?? [];
   }
 
-  private resolveSectionsFromFields(): FormSectionConfig[] {
-    const sections = new Map<string, FormSectionConfig>();
+  private resolveSectionsFromFields(): ResolvedFormSection[] {
+    const sections = new Map<string, ResolvedFormSection>();
+
+    (this.config.sections ?? []).forEach((section) => {
+      sections.set(section.key, {
+        ...section,
+        fields: []
+      });
+    });
 
     this.getAllFields().forEach((field) => {
       const fieldSection = this.resolveFieldSection(field);
@@ -354,23 +364,30 @@ export class FormShellComponent implements AfterViewInit, OnChanges, OnDestroy {
     return Array.from(sections.values());
   }
 
-  private resolveFieldSection(field: FormFieldConfig): FormFieldSectionConfig | null {
+  private resolveFieldSection(field: FormFieldConfig): FormSectionConfig | null {
     if (!field.section) {
       return null;
     }
 
-    if (typeof field.section === 'string') {
-      return {
-        key: this.createSectionKey(field.section),
-        title: field.section
-      };
+    const configuredSection = (this.config.sections ?? []).find(
+      (section) => section.key === field.section
+    );
+
+    if (configuredSection) {
+      return configuredSection;
     }
 
-    return field.section;
+    return {
+      key: field.section,
+      title: this.createSectionTitle(field.section)
+    };
   }
 
-  private createSectionKey(title: string): string {
-    return title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  private createSectionTitle(sectionKey: string): string {
+    return sectionKey
+      .trim()
+      .replace(/[-_]+/g, ' ')
+      .replace(/\b\w/g, (character) => character.toUpperCase());
   }
 
   private createDropdownRequiredValidator(): ValidatorFn {

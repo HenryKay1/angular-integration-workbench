@@ -7,3 +7,5 @@ dist/
 local/
 ng-serve.err.log
 ng-serve.out.log
+ng-serve-*.log
+ng-serve-*.pid

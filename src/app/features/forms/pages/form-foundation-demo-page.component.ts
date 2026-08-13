@@ -46,11 +46,23 @@ export class FormFoundationDemoPageComponent {
   };
 
   protected readonly formConfig: FormConfig = {
-    formWidth: '60%',
-    formAlign: 'left',
+    formWidth: '80%',
+    formAlign: 'center',
     fieldsPerLine: 5,
     fieldMinWidth: '18rem',
     fieldSpacing: '1rem',
+    sections: [
+      {
+        key: 'review-details',
+        title: 'Review details',
+        collapsible: true,
+        collapsedByDefault: true
+      },
+      {
+        key: 'release-controls',
+        title: 'Release controls'
+      }
+    ],
     fields: [
       {
         key: 'profileImage',
@@ -116,6 +128,31 @@ export class FormFoundationDemoPageComponent {
         helperText: 'Sectionless fields render in the standard form area.',
         colSpan: 3
       },
+      
+ 
+      {
+        key: 'reviewOwner',
+        label: 'Review owner',
+        type: 'text',
+        required: true,
+        section: 'review-details'
+      },
+      {
+        key: 'notifyStakeholders',
+        label: 'Notify stakeholders',
+        type: 'checkbox',
+        controlStyle: 'toggle',
+        section: 'review-details'
+      },
+      {
+        key: 'approvedForRelease',
+        label: 'Approved for release',
+        type: 'checkbox',
+        controlStyle: 'toggle',
+        colSpan: 1,
+        section: 'review-details'
+      },
+
       {
         key: 'supportingFiles',
         label: 'File Attachments',
@@ -126,93 +163,39 @@ export class FormFoundationDemoPageComponent {
         accept: '.png,.jpg,.jpeg,.pdf,.doc,.docx,.xls,.xlsx,.txt',
         allowAssignedFilename: true,
         helperText: 'This section can collapse.',
-        colSpan: 2,
-        section: {
-          key: 'review-details',
-          title: 'Review details',
-          collapsible: true,
-          collapsedByDefault: false
-        }
+        colSpan: 5,
+        section: 'review-details'
       },
-      {
-        key: 'notifyStakeholders',
-        label: 'Notify stakeholders',
-        type: 'checkbox',
-        controlStyle: 'checkbox',
-        section: {
-          key: 'review-details',
-          title: 'Review details',
-          collapsible: true,
-          collapsedByDefault: false
-        }
-      },
-      {
-        key: 'approvedForRelease',
-        label: 'Approved for release',
-        type: 'checkbox',
-        controlStyle: 'toggle',
-        colSpan: 2,
-        section: {
-          key: 'review-details',
-          title: 'Review details',
-          collapsible: true,
-          collapsedByDefault: false
-        }
-      },
-      {
-        key: 'reviewOwner',
-        label: 'Review owner',
-        type: 'text',
-        required: true,
-        section: {
-          key: 'review-details',
-          title: 'Review details',
-          collapsible: true,
-          collapsedByDefault: false
-        }
-      },
-      {
+            {
         key: 'reviewNotes',
         label: 'Review notes',
         type: 'textarea',
         helperText: 'This section can collapse.',
-        colSpan: 2,
-        section: {
-          key: 'review-details',
-          title: 'Review details',
-          collapsible: true,
-          collapsedByDefault: false
-        }
+        colSpan: 4,
+        section: 'review-details'
       },
+ 
+
       {
         key: 'deploymentWindow',
         label: 'Deployment window',
         type: 'text',
         helperText: 'Release controls are in an always-open section.',
-        section: {
-          key: 'release-controls',
-          title: 'Release controls'
-        }
+        section: 'release-controls'
       },
       {
         key: 'releaseManager',
         label: 'Release manager',
         type: 'text',
         required: true,
-        section: {
-          key: 'release-controls',
-          title: 'Release controls'
-        }
+        section: 'release-controls'
       },
       {
         key: 'releaseDate',
         label: 'Release date',
         type: 'date',
         required: true,
-        section: {
-          key: 'release-controls',
-          title: 'Release controls'
-        }
+        section: 'release-controls'
       },
       {
         key: 'releaseRiskScore',
@@ -221,30 +204,21 @@ export class FormFoundationDemoPageComponent {
         min: 1,
         max: 5,
         step: 1,
-        section: {
-          key: 'release-controls',
-          title: 'Release controls'
-        }
+        section: 'release-controls'
       },
       {
         key: 'escalationRequired',
         label: 'Escalation required',
         type: 'checkbox',
         controlStyle: 'toggle',
-        section: {
-          key: 'release-controls',
-          title: 'Release controls'
-        }
+        section: 'release-controls'
       },
       {
         key: 'rollbackReady',
         label: 'Rollback ready',
         type: 'checkbox',
         controlStyle: 'checkbox',
-        section: {
-          key: 'release-controls',
-          title: 'Release controls'
-        }
+        section: 'release-controls'
       }
     ]
   };

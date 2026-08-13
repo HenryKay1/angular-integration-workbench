@@ -1,10 +1,3 @@
-export interface FormFieldSectionConfig {
-  key: string;
-  title: string;
-  collapsible?: boolean;
-  collapsedByDefault?: boolean;
-}
-
 export interface BaseFieldConfig {
   key: string;
   label: string;
@@ -15,7 +8,7 @@ export interface BaseFieldConfig {
   helperText?: string;
   colSpan?: number;
   align?: 'left' | 'center' | 'right';
-  section?: string | FormFieldSectionConfig;
+  section?: string;
 }
 
 export interface TextFieldConfig extends BaseFieldConfig {
@@ -126,7 +119,6 @@ export interface FormSectionConfig {
   title: string;
   collapsible?: boolean;
   collapsedByDefault?: boolean;
-  fields: FormFieldConfig[];
 }
 
 export interface FormConfig {
@@ -135,6 +127,7 @@ export interface FormConfig {
   fieldsPerLine?: number;
   fieldMinWidth?: string;
   fieldSpacing?: string;
+  sections?: FormSectionConfig[];
   fields?: FormFieldConfig[];
   requireSubmitConfirmation?: boolean;
   submitConfirmationTitle?: string;
