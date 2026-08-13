@@ -1,11 +1,16 @@
 import { CommonModule } from '@angular/common';
 import {
+  AfterViewInit,
   Component,
+  ElementRef,
   EventEmitter,
   Input,
+  OnDestroy,
   OnChanges,
   Output,
-  SimpleChanges
+  QueryList,
+  SimpleChanges,
+  ViewChildren
 } from '@angular/core';
 import {
   AbstractControl,
@@ -17,6 +22,7 @@ import {
   ValidatorFn,
   Validators
 } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { DropdownFieldComponent } from '../dropdown-field/dropdown-field.component';
 import { FileUploadFieldComponent } from '../file-upload-field/file-upload-field.component';
 import { ImageCropFieldComponent } from '../image-crop-field/image-crop-field.component';
@@ -25,6 +31,7 @@ import {
   DropdownSelection,
   FormConfig,
   FormFieldConfig,
+  FormFieldSectionConfig,
   ImageCropValue,
   ImageHeaderFieldConfig,
   FormSectionConfig,
@@ -47,26 +54,59 @@ import {
   templateUrl: './form-shell.component.html',
   styleUrl: './form-shell.component.css'
 })
-export class FormShellComponent implements OnChanges {
+export class FormShellComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input({ required: true }) config!: FormConfig;
   @Input() initialValue: FormSubmissionValue = {};
   @Input() submitLabel = 'Submit';
+
+  @ViewChildren('formGrid') private readonly formGrids!: QueryList<ElementRef<HTMLElement>>;
 
   @Output() submitForm = new EventEmitter<FormSubmissionValue>();
   @Output() cancelForm = new EventEmitter<void>();
 
   private readonly formBuilder = new FormBuilder();
+  private readonly gridResizeObserver =
+    typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver((entries) => {
+          entries.forEach((entry) => this.updateGridColumnCount(entry.target as HTMLElement));
+        })
+      : null;
+  private gridChangesSubscription?: Subscription;
 
   protected form: FormGroup = this.formBuilder.group({});
   protected collapsedSections: Record<string, boolean> = {};
   protected isConfirmationOpen = false;
 
-  protected get resolvedFieldsPerLine(): 1 | 2 | 3 {
-    return this.config.fieldsPerLine ?? 1;
+  protected get resolvedFieldsPerLine(): number {
+    return this.getPositiveNumber(this.config.fieldsPerLine, 1);
   }
 
   protected get resolvedFieldSpacing(): string {
     return this.config.fieldSpacing ?? '1rem';
+  }
+
+  protected get resolvedFieldMinWidth(): string {
+    return this.config.fieldMinWidth ?? '18rem';
+  }
+
+  protected get resolvedFormWidth(): string {
+    return this.config.formWidth ?? '100%';
+  }
+
+  protected get resolvedFormMarginLeft(): string {
+    if (this.config.formAlign === 'right') {
+      return 'auto';
+    }
+
+    return this.config.formAlign === 'center' || !this.config.formAlign ? 'auto' : '0';
+  }
+
+  protected get resolvedFormMarginRight(): string {
+    if (this.config.formAlign === 'left') {
+      return 'auto';
+    }
+
+    return this.config.formAlign === 'center' || !this.config.formAlign ? 'auto' : '0';
   }
 
   protected get visibleFields(): FormFieldConfig[] {
@@ -75,10 +115,20 @@ export class FormShellComponent implements OnChanges {
     );
   }
 
+  protected get visibleUnsectionedFields(): FormFieldConfig[] {
+    return this.visibleFields.filter((field) => !field.section);
+  }
+
   protected get visibleSections(): FormSectionConfig[] {
-    return (this.config.sections ?? []).filter(
-      (section) => this.getVisibleSectionFields(section).length > 0
-    );
+    return this.resolveSectionsFromFields().filter((section) => section.fields.length > 0);
+  }
+
+  protected get hasSections(): boolean {
+    return this.visibleSections.length > 0;
+  }
+
+  protected get hasUnsectionedFields(): boolean {
+    return this.visibleUnsectionedFields.length > 0;
   }
 
   protected get topImageHeaderField(): ImageHeaderFieldConfig | null {
@@ -94,7 +144,18 @@ export class FormShellComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['config'] || changes['initialValue']) {
       this.rebuildForm();
+      queueMicrotask(() => this.observeFormGrids());
     }
+  }
+
+  ngAfterViewInit(): void {
+    this.observeFormGrids();
+    this.gridChangesSubscription = this.formGrids.changes.subscribe(() => this.observeFormGrids());
+  }
+
+  ngOnDestroy(): void {
+    this.gridResizeObserver?.disconnect();
+    this.gridChangesSubscription?.unsubscribe();
   }
 
   protected getVisibleSectionFields(section: FormSectionConfig): FormFieldConfig[] {
@@ -107,6 +168,7 @@ export class FormShellComponent implements OnChanges {
 
   protected toggleSection(sectionKey: string): void {
     this.collapsedSections[sectionKey] = !this.isSectionCollapsed(sectionKey);
+    requestAnimationFrame(() => this.observeFormGrids());
   }
 
   protected trackSectionByKey(_: number, section: FormSectionConfig): string {
@@ -115,6 +177,10 @@ export class FormShellComponent implements OnChanges {
 
   protected trackFieldByKey(_: number, field: FormFieldConfig): string {
     return field.key;
+  }
+
+  protected getFieldColSpan(field: FormFieldConfig): number {
+    return Math.min(field.colSpan ?? 1, this.resolvedFieldsPerLine);
   }
 
   protected getFieldValueTooltip(fieldKey: string): string | null {
@@ -199,7 +265,7 @@ export class FormShellComponent implements OnChanges {
 
     this.form = this.formBuilder.group(controls);
     this.collapsedSections = Object.fromEntries(
-      (this.config.sections ?? []).map((section) => [
+      this.resolveSectionsFromFields().map((section) => [
         section.key,
         !!section.collapsible && !!section.collapsedByDefault
       ])
@@ -259,11 +325,52 @@ export class FormShellComponent implements OnChanges {
   }
 
   private getAllFields(): FormFieldConfig[] {
-    if (this.config.layout === 'sectioned') {
-      return (this.config.sections ?? []).flatMap((section) => section.fields);
+    return this.config.fields ?? [];
+  }
+
+  private resolveSectionsFromFields(): FormSectionConfig[] {
+    const sections = new Map<string, FormSectionConfig>();
+
+    this.getAllFields().forEach((field) => {
+      const fieldSection = this.resolveFieldSection(field);
+
+      if (!fieldSection) {
+        return;
+      }
+
+      const existingSection = sections.get(fieldSection.key);
+
+      if (existingSection) {
+        existingSection.fields.push(field);
+        return;
+      }
+
+      sections.set(fieldSection.key, {
+        ...fieldSection,
+        fields: [field]
+      });
+    });
+
+    return Array.from(sections.values());
+  }
+
+  private resolveFieldSection(field: FormFieldConfig): FormFieldSectionConfig | null {
+    if (!field.section) {
+      return null;
     }
 
-    return this.config.fields ?? [];
+    if (typeof field.section === 'string') {
+      return {
+        key: this.createSectionKey(field.section),
+        title: field.section
+      };
+    }
+
+    return field.section;
+  }
+
+  private createSectionKey(title: string): string {
+    return title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   }
 
   private createDropdownRequiredValidator(): ValidatorFn {
@@ -330,5 +437,73 @@ export class FormShellComponent implements OnChanges {
 
   private emitSubmission(): void {
     this.submitForm.emit(this.form.getRawValue());
+  }
+
+  private observeFormGrids(): void {
+    this.gridResizeObserver?.disconnect();
+
+    this.formGrids?.forEach(({ nativeElement }) => {
+      this.updateGridColumnCount(nativeElement);
+      this.gridResizeObserver?.observe(nativeElement);
+    });
+  }
+
+  private updateGridColumnCount(gridElement: HTMLElement): void {
+    const styles = getComputedStyle(gridElement);
+    const maxColumns = this.getPositiveNumber(Number(styles.getPropertyValue('--fields-per-line')), 1);
+    const minFieldWidth = this.parseCssSizeToPixels(
+      styles.getPropertyValue('--field-min-width'),
+      gridElement,
+      288
+    );
+    const columnGap = this.parseCssSizeToPixels(styles.columnGap, gridElement, 0);
+    const availableWidth = gridElement.clientWidth;
+    const activeColumns = Math.max(
+      1,
+      Math.min(maxColumns, Math.floor((availableWidth + columnGap) / (minFieldWidth + columnGap)))
+    );
+
+    gridElement.style.setProperty('--active-fields-per-line', String(activeColumns));
+
+    gridElement.querySelectorAll<HTMLElement>('.form-shell__field').forEach((fieldElement) => {
+      const requestedSpan = this.getPositiveNumber(
+        Number(getComputedStyle(fieldElement).getPropertyValue('--field-span')),
+        1
+      );
+
+      fieldElement.style.setProperty('--active-field-span', String(Math.min(requestedSpan, activeColumns)));
+    });
+  }
+
+  private getPositiveNumber(value: number | undefined, fallback: number): number {
+    if (value === undefined || !Number.isFinite(value) || value <= 0) {
+      return fallback;
+    }
+
+    return Math.floor(value);
+  }
+
+  private parseCssSizeToPixels(value: string, contextElement: HTMLElement, fallback: number): number {
+    const trimmedValue = value.trim();
+
+    if (!trimmedValue) {
+      return fallback;
+    }
+
+    if (trimmedValue.endsWith('px')) {
+      return Number.parseFloat(trimmedValue) || fallback;
+    }
+
+    if (trimmedValue.endsWith('rem')) {
+      const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
+      return (Number.parseFloat(trimmedValue) || 0) * rootFontSize || fallback;
+    }
+
+    if (trimmedValue.endsWith('em')) {
+      const contextFontSize = Number.parseFloat(getComputedStyle(contextElement).fontSize);
+      return (Number.parseFloat(trimmedValue) || 0) * contextFontSize || fallback;
+    }
+
+    return Number.parseFloat(trimmedValue) || fallback;
   }
 }

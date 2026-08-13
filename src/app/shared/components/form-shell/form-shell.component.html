@@ -1,5 +1,8 @@
     <form
       class="form-shell"
+      [style.--form-width]="resolvedFormWidth"
+      [style.--form-margin-left]="resolvedFormMarginLeft"
+      [style.--form-margin-right]="resolvedFormMarginRight"
       [formGroup]="form"
       (ngSubmit)="handleSubmit()"
       novalidate
@@ -32,23 +35,23 @@
       </section>
 
       <div class="form-shell__content">
-        <ng-container *ngIf="config.layout === 'simple'; else sectionedLayout">
-          <section class="form-shell__panel">
-            <div
-              class="form-shell__grid"
-              [style.--fields-per-line]="resolvedFieldsPerLine"
-              [style.--field-gap]="resolvedFieldSpacing"
-            >
-              <ng-container *ngFor="let field of visibleFields; trackBy: trackFieldByKey">
-                <ng-container
-                  *ngTemplateOutlet="fieldTemplate; context: { $implicit: field }"
-                />
-              </ng-container>
-            </div>
-          </section>
-        </ng-container>
+        <section *ngIf="hasUnsectionedFields" class="form-shell__panel">
+          <div
+            #formGrid
+            class="form-shell__grid"
+            [style.--fields-per-line]="resolvedFieldsPerLine"
+            [style.--field-min-width]="resolvedFieldMinWidth"
+            [style.--field-gap]="resolvedFieldSpacing"
+          >
+            <ng-container *ngFor="let field of visibleUnsectionedFields; trackBy: trackFieldByKey">
+              <ng-container
+                *ngTemplateOutlet="fieldTemplate; context: { $implicit: field }"
+              />
+            </ng-container>
+          </div>
+        </section>
 
-        <ng-template #sectionedLayout>
+        <ng-container *ngIf="hasSections">
           <section
             *ngFor="let section of visibleSections; trackBy: trackSectionByKey"
             class="form-shell__panel"
@@ -68,9 +71,11 @@
             </div>
 
             <div
+              #formGrid
               *ngIf="!isSectionCollapsed(section.key)"
               class="form-shell__grid"
               [style.--fields-per-line]="resolvedFieldsPerLine"
+              [style.--field-min-width]="resolvedFieldMinWidth"
               [style.--field-gap]="resolvedFieldSpacing"
             >
               <ng-container *ngFor="let field of getVisibleSectionFields(section); trackBy: trackFieldByKey">
@@ -80,15 +85,16 @@
               </ng-container>
             </div>
           </section>
-        </ng-template>
+        </ng-container>
       </div>
 
       <ng-template #fieldTemplate let-field>
         <div
           class="form-shell__field"
+          [class.form-shell__field--file-upload]="field.type === 'file-upload'"
           [class.form-shell__field--align-center]="field.align === 'center'"
           [class.form-shell__field--align-right]="field.align === 'right'"
-          [style.grid-column]="'span ' + (field.colSpan ?? 1)"
+          [style.--field-span]="getFieldColSpan(field)"
         >
           <ng-container [ngSwitch]="field.type">
             <label *ngSwitchCase="'text'" class="form-shell__control">
@@ -136,8 +142,20 @@
             </label>
 
             <label *ngSwitchCase="'checkbox'" class="form-shell__checkbox">
-              <input type="checkbox" [formControlName]="field.key" />
               <span class="form-shell__label" [title]="field.label">{{ field.label }}</span>
+
+              <span *ngIf="field.controlStyle === 'checkbox'; else toggleCheckbox" class="form-shell__native-checkbox">
+                <input type="checkbox" [formControlName]="field.key" />
+              </span>
+
+              <ng-template #toggleCheckbox>
+                <span class="form-shell__toggle">
+                  <input type="checkbox" [formControlName]="field.key" />
+                  <span class="form-shell__toggle-track" aria-hidden="true">
+                    <span class="form-shell__toggle-thumb"></span>
+                  </span>
+                </span>
+              </ng-template>
             </label>
 
             <label *ngSwitchCase="'dropdown'" class="form-shell__control">
@@ -152,9 +170,9 @@
             </label>
 
             <div *ngSwitchCase="'file-upload'" class="form-shell__control">
-              <span class="form-shell__label" [title]="field.label">{{ field.label }}</span>
               <aiw-file-upload-field
                 [formControlName]="field.key"
+                [label]="field.label"
                 [multiple]="field.multiple ?? false"
                 [maxFiles]="field.maxFiles"
                 [accept]="field.accept"

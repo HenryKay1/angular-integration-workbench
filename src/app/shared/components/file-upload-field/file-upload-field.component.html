@@ -1,107 +1,97 @@
-    <div class="file-upload" [class.file-upload--disabled]="disabled">
-      <div class="file-upload__toolbar">
-        <label class="file-upload__pick-button">
-          <input
-            type="file"
-            class="file-upload__native-input"
-            [attr.accept]="accept || null"
-            [attr.multiple]="multiple ? '' : null"
-            [disabled]="disabled || reachedMaxFiles"
-            (change)="handleFileSelection($event)"
-          />
-          <span>{{ reachedMaxFiles ? 'Max files reached' : pickButtonLabel }}</span>
-        </label>
+<div class="file-upload" [class.file-upload--disabled]="disabled">
+  <div class="file-upload__header">
+    <span *ngIf="label" class="file-upload__label" [title]="label">{{ label }}</span>
 
-        <p class="file-upload__meta" *ngIf="items.length > 0">
-          {{ items.length }} file(s) ready
-        </p>
-      </div>
-
-      <p *ngIf="items.length === 0" class="file-upload__empty">
-        No files selected yet.
-      </p>
-
-      <div class="file-upload__list" *ngIf="items.length > 0">
-        <article
-          *ngFor="let item of items; trackBy: trackItemById"
-          class="file-upload__card"
-        >
-          <div class="file-upload__badge">{{ item.extension || 'FILE' }}</div>
-
-          <div class="file-upload__details">
-            <label class="file-upload__field" *ngIf="allowAssignedFilename">
-              <span>Assigned filename</span>
-              <input
-                type="text"
-                [disabled]="disabled"
-                [ngModel]="item.assignedName || item.originalName"
-                (ngModelChange)="updateAssignedName(item.id, $event)"
-              />
-            </label>
-
-            <div class="file-upload__copy">
-              <strong [title]="item.originalName">{{ item.originalName }}</strong>
-              <span>{{ item.mimeType || 'Unknown type' }} . {{ formatFileSize(item.sizeBytes) }}</span>
-            </div>
-          </div>
-
-          <div class="file-upload__actions">
-            <button
-              type="button"
-              class="file-upload__action"
-              [disabled]="disabled"
-              (click)="previewItem(item)"
-            >
-              Preview
-            </button>
-
-            <button
-              type="button"
-              class="file-upload__action file-upload__action--ghost"
-              [disabled]="disabled"
-              (click)="removeItem(item.id)"
-            >
-              Remove
-            </button>
-          </div>
-        </article>
-      </div>
-    </div>
-
-    <div
-      *ngIf="activePreview"
-      class="file-upload__modal-backdrop"
-      (click)="closePreview()"
+    <label
+      class="file-upload__pick-button"
+      [class.file-upload__pick-button--disabled]="disabled || reachedMaxFiles"
+      [title]="reachedMaxFiles ? 'Max files reached' : pickButtonLabel"
+      [attr.aria-label]="reachedMaxFiles ? 'Max files reached' : pickButtonLabel"
     >
-      <section class="file-upload__modal" (click)="$event.stopPropagation()">
-        <header class="file-upload__modal-header">
-          <div>
-            <h3 [title]="activePreview.originalName">{{ activePreview.originalName }}</h3>
-            <p>{{ activePreview.mimeType || 'Unknown type' }}</p>
-          </div>
-          <button
-            type="button"
-            class="file-upload__action file-upload__action--ghost"
-            (click)="closePreview()"
-          >
-            Close
-          </button>
-        </header>
+      <input
+        type="file"
+        class="file-upload__native-input"
+        [attr.accept]="accept || null"
+        [attr.multiple]="multiple ? '' : null"
+        [disabled]="disabled || reachedMaxFiles"
+        (change)="handleFileSelection($event)"
+      />
+      <img
+        src="assets/images/icons/file-upload.svg"
+        alt=""
+        aria-hidden="true"
+      />
+    </label>
+  </div>
 
-        <div class="file-upload__modal-body">
-          <img
-            *ngIf="isImage(activePreview)"
-            [src]="activePreview.previewUrl"
-            [alt]="activePreview.originalName"
-          />
+  <div class="file-upload__table-shell" *ngIf="items.length > 0">
+    <table class="file-upload__table">
+      <thead>
+        <tr>
+          <th scope="col">Filename</th>
+          <th scope="col">Size</th>
+          <th scope="col" class="file-upload__actions-heading">Actions</th>
+        </tr>
+      </thead>
 
-          <object
-            *ngIf="isPdf(activePreview)"
-            [data]="activePreview.previewUrl"
-            type="application/pdf"
-          ></object>
+      <tbody>
+        <tr *ngFor="let item of items; trackBy: trackItemById">
+          <td>
+            <strong class="file-upload__filename" [title]="item.originalName">
+              {{ item.originalName }}
+            </strong>
+          </td>
 
-          <pre *ngIf="isText(activePreview)">{{ activePreviewText }}</pre>
-        </div>
-      </section>
-    </div>
+          <td>
+            <span class="file-upload__size">{{ formatFileSize(item.sizeBytes) }}</span>
+          </td>
+
+          <td>
+            <div class="file-upload__actions">
+              <button
+                type="button"
+                class="file-upload__icon-button file-upload__icon-button--primary"
+                [disabled]="disabled || !item.previewUrl"
+                title="Download file"
+                aria-label="Download file"
+                (click)="downloadItem(item)"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M12 3.75v10.5" />
+                  <path d="m7.75 10 4.25 4.25L16.25 10" />
+                  <path d="M4.75 18.75h14.5" />
+                </svg>
+              </button>
+
+              <button
+                type="button"
+                class="file-upload__icon-button file-upload__icon-button--danger"
+                [disabled]="disabled"
+                title="Remove file"
+                aria-label="Remove file"
+                (click)="removeItem(item.id)"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M3.75 6.25h16.5" />
+                  <path d="M9.75 6.25V4.5h4.5v1.75" />
+                  <path d="M18.5 6.25l-.9 13.25H6.4L5.5 6.25" />
+                  <path d="M10 10v6" />
+                  <path d="M14 10v6" />
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>

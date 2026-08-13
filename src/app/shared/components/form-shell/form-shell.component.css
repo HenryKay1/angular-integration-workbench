@@ -2,7 +2,10 @@
       display: grid;
       grid-template-rows: minmax(0, 1fr) auto;
       gap: 1rem;
+      width: min(100%, var(--form-width, 100%));
       min-height: 100%;
+      margin-left: var(--form-margin-left, auto);
+      margin-right: var(--form-margin-right, auto);
       align-content: stretch;
     }
 
@@ -14,6 +17,7 @@
     }
 
     .form-shell__panel {
+      container-type: inline-size;
       display: grid;
       gap: 1rem;
       padding: 1.25rem;
@@ -54,15 +58,26 @@
     .form-shell__grid {
       display: grid;
       gap: var(--field-gap, 1rem);
-      grid-template-columns: repeat(var(--fields-per-line, 1), minmax(0, 1fr));
+      grid-template-columns: repeat(var(--active-fields-per-line, var(--fields-per-line, 1)), minmax(0, 1fr));
       align-items: start;
     }
 
     .form-shell__field {
       display: grid;
       gap: 0.45rem;
+      grid-column: span var(--active-field-span, var(--field-span, 1));
       min-width: 0;
       max-width: 100%;
+    }
+
+    .form-shell__field--file-upload {
+      overflow: hidden;
+    }
+
+    .form-shell__field--file-upload .form-shell__helper {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .form-shell__field--align-center {
@@ -78,6 +93,7 @@
     .form-shell__control {
       display: grid;
       gap: 0.45rem;
+      width: 100%;
       min-width: 0;
       color: #243b53;
       font-weight: 600;
@@ -117,6 +133,7 @@
     .form-shell__control input,
     .form-shell__control textarea {
       width: 100%;
+      min-width: 0;
       max-width: 100%;
       box-sizing: border-box;
       padding: 0.8rem 0.9rem;
@@ -137,16 +154,112 @@
     .form-shell__checkbox {
       display: inline-flex;
       align-items: center;
+      justify-content: flex-start;
       gap: 0.65rem;
+      width: fit-content;
+      max-width: 100%;
       min-width: 0;
       color: #102a43;
       font-weight: 600;
+      cursor: pointer;
     }
 
-    .form-shell__checkbox input {
-      width: 1rem;
-      height: 1rem;
+    .form-shell__checkbox .form-shell__label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .form-shell__toggle {
+      position: relative;
       flex: 0 0 auto;
+      display: inline-grid;
+      place-items: center;
+      width: 2.75rem;
+      height: 1.55rem;
+    }
+
+    .form-shell__toggle input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    .form-shell__toggle-track {
+      position: absolute;
+      inset: 0;
+      border: 1px solid #bcccdc;
+      border-radius: 999px;
+      background: #d9e2ec;
+      transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .form-shell__toggle-thumb {
+      position: absolute;
+      top: 50%;
+      left: 0.2rem;
+      width: 1.05rem;
+      height: 1.05rem;
+      border-radius: 999px;
+      background: #ffffff;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.22);
+      transform: translateY(-50%);
+      transition: transform 160ms ease;
+    }
+
+    .form-shell__toggle input:checked + .form-shell__toggle-track {
+      border-color: #0f766e;
+      background: #0f766e;
+    }
+
+    .form-shell__toggle input:checked + .form-shell__toggle-track .form-shell__toggle-thumb {
+      transform: translate(1.2rem, -50%);
+    }
+
+    .form-shell__toggle input:focus-visible + .form-shell__toggle-track {
+      box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.22);
+    }
+
+    .form-shell__checkbox:hover .form-shell__toggle-track {
+      border-color: #38b2ac;
+    }
+
+    .form-shell__toggle input:disabled {
+      cursor: not-allowed;
+    }
+
+    .form-shell__toggle input:disabled + .form-shell__toggle-track {
+      opacity: 0.6;
+    }
+
+    .form-shell__native-checkbox {
+      flex: 0 0 auto;
+      display: inline-grid;
+      place-items: center;
+      width: 1.35rem;
+      height: 1.35rem;
+    }
+
+    .form-shell__native-checkbox input {
+      width: 1.15rem;
+      height: 1.15rem;
+      margin: 0;
+      accent-color: #0f766e;
+      cursor: pointer;
+    }
+
+    .form-shell__native-checkbox input:focus-visible {
+      outline: 3px solid rgba(20, 184, 166, 0.22);
+      outline-offset: 2px;
+    }
+
+    .form-shell__native-checkbox input:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
     }
 
     .form-shell__helper,
@@ -247,6 +360,10 @@
     }
 
     @media (max-width: 720px) {
+      .form-shell {
+        width: 100%;
+      }
+
       .form-shell__grid {
         grid-template-columns: 1fr;
       }

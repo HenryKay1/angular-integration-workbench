@@ -5,8 +5,8 @@
           <h2>Phase 0 through 3 workbench</h2>
           <p class="forms-page__intro">
             This demo keeps the new form shell decoupled from records save logic while
-            proving contracts, layouts, reactive form generation, confirmation flow,
-            searchable dropdown behavior, image-header editing, and flexible file uploads.
+            proving contracts, section behavior, reactive form generation,
+            searchable dropdown behavior, image crop editing, checkbox options, and flexible file uploads.
           </p>
         </div>
       </header>
@@ -14,46 +14,25 @@
       <section class="forms-page__grid">
         <article class="forms-page__panel">
           <div class="forms-page__panel-header">
-            <h3>Simple Layout</h3>
-            <p>Flat config with standard fields, dropdown search, a single image header, and file upload metadata.</p>
+            <h3>Form Sections</h3>
+            <p>One form demonstrating an always-open section and a collapsible section.</p>
           </div>
 
           <aiw-form-shell
-            [config]="simpleFormConfig"
-            [initialValue]="simpleInitialValue"
+            [config]="formConfig"
+            [initialValue]="initialValue"
             submitLabel="Preview submit"
-            (submitForm)="lastSimpleSubmission = $event"
-            (cancelForm)="simpleCancelCount = simpleCancelCount + 1"
-          />
-        </article>
-
-        <article class="forms-page__panel">
-          <div class="forms-page__panel-header">
-            <h3>Sectioned Layout</h3>
-            <p>Top-level sections, dropdown custom entry, confirmation flow, and multiple file attachments.</p>
-          </div>
-
-          <aiw-form-shell
-            [config]="sectionedFormConfig"
-            [initialValue]="sectionedInitialValue"
-            submitLabel="Submit sectioned form"
-            (submitForm)="lastSectionedSubmission = $event"
-            (cancelForm)="sectionedCancelCount = sectionedCancelCount + 1"
+            (submitForm)="lastSubmission = $event"
+            (cancelForm)="cancelCount = cancelCount + 1"
           />
         </article>
       </section>
 
       <section class="forms-page__results">
         <article class="forms-page__result-card">
-          <h3>Simple Layout Output</h3>
-          <p>Cancel clicks: {{ simpleCancelCount }}</p>
-          <pre>{{ lastSimpleSubmission || emptyState | json }}</pre>
-        </article>
-
-        <article class="forms-page__result-card">
-          <h3>Sectioned Layout Output</h3>
-          <p>Cancel clicks: {{ sectionedCancelCount }}</p>
-          <pre>{{ lastSectionedSubmission || emptyState | json }}</pre>
+          <h3>Form Output</h3>
+          <p>Cancel clicks: {{ cancelCount }}</p>
+          <pre>{{ lastSubmission || emptyState | json }}</pre>
         </article>
       </section>
     </section>

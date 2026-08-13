@@ -1,3 +1,10 @@
+export interface FormFieldSectionConfig {
+  key: string;
+  title: string;
+  collapsible?: boolean;
+  collapsedByDefault?: boolean;
+}
+
 export interface BaseFieldConfig {
   key: string;
   label: string;
@@ -6,8 +13,9 @@ export interface BaseFieldConfig {
   disabled?: boolean;
   hidden?: boolean;
   helperText?: string;
-  colSpan?: 1 | 2 | 3;
+  colSpan?: number;
   align?: 'left' | 'center' | 'right';
+  section?: string | FormFieldSectionConfig;
 }
 
 export interface TextFieldConfig extends BaseFieldConfig {
@@ -31,6 +39,7 @@ export interface NumberFieldConfig extends BaseFieldConfig {
 
 export interface CheckboxFieldConfig extends BaseFieldConfig {
   type: 'checkbox';
+  controlStyle?: 'checkbox' | 'toggle';
 }
 
 export interface DateFieldConfig extends BaseFieldConfig {
@@ -121,11 +130,12 @@ export interface FormSectionConfig {
 }
 
 export interface FormConfig {
-  layout: 'simple' | 'sectioned';
-  fieldsPerLine?: 1 | 2 | 3;
+  formWidth?: string;
+  formAlign?: 'left' | 'center' | 'right';
+  fieldsPerLine?: number;
+  fieldMinWidth?: string;
   fieldSpacing?: string;
   fields?: FormFieldConfig[];
-  sections?: FormSectionConfig[];
   requireSubmitConfirmation?: boolean;
   submitConfirmationTitle?: string;
   submitConfirmationMessage?: string;

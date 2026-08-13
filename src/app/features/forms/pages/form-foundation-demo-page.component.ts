@@ -17,15 +17,13 @@ import { FormShellComponent } from '../../../shared/components/form-shell/form-s
 export class FormFoundationDemoPageComponent {
   protected readonly emptyState = { message: 'Submit a form to inspect the payload.' };
 
-  protected simpleCancelCount = 0;
-  protected sectionedCancelCount = 0;
-  protected lastSimpleSubmission: FormSubmissionValue | null = null;
-  protected lastSectionedSubmission: FormSubmissionValue | null = null;
+  protected cancelCount = 0;
+  protected lastSubmission: FormSubmissionValue | null = null;
 
-  protected readonly simpleInitialValue: FormSubmissionValue = {
+  protected readonly initialValue: FormSubmissionValue = {
+    profileImage: null,
     title: 'Quarterly integration refresh',
     owner: 'Platform Team',
-    statusNote: 'Needs final QA sign-off.',
     category: {
       selectedKey: 'operations',
       selectedLabel: 'Operations',
@@ -33,33 +31,28 @@ export class FormFoundationDemoPageComponent {
     } satisfies DropdownSelection,
     retryCount: 2,
     goLiveDate: '2026-05-15',
+    statusNote: 'Needs final QA sign-off.',
+    supportingFiles: null,
     notifyStakeholders: true,
-    heroImage: null,
-    profileImage: null,
-    supportingDoc: null
+    approvedForRelease: false,
+    reviewOwner: 'QA Lead',
+    reviewNotes: 'Validate uploaded files before final approval.',
+    escalationRequired: false,
+    deploymentWindow: 'Evening release ',
+    releaseManager: 'Release Desk',
+    releaseDate: '2026-05-20',
+    releaseRiskScore: 3,
+    rollbackReady: true
   };
 
-  protected readonly sectionedInitialValue: FormSubmissionValue = {
-    recordTitle: 'Customer profile sync',
-    owner: 'Data Operations',
-    environment: {
-      selectedKey: undefined,
-      selectedLabel: 'Other',
-      isOther: true,
-      otherValue: 'UAT'
-    } satisfies DropdownSelection,
-    summary: 'Refresh mapping and validate transformed payload fields.',
-    runbookLink: 'https://internal.example/runbooks/customer-profile-sync',
-    attachments: null,
-    approved: false
-  };
-
-  protected readonly simpleFormConfig: FormConfig = {
-    layout: 'simple',
-    fieldsPerLine: 3,
+  protected readonly formConfig: FormConfig = {
+    formWidth: '60%',
+    formAlign: 'left',
+    fieldsPerLine: 5,
+    fieldMinWidth: '18rem',
     fieldSpacing: '1rem',
     fields: [
-        {
+      {
         key: 'profileImage',
         label: 'Profile image',
         type: 'image-crop',
@@ -89,13 +82,6 @@ export class FormFoundationDemoPageComponent {
         required: true
       },
       {
-        key: 'statusNote',
-        label: 'Status note',
-        type: 'textarea',
-        helperText: 'Use this for lightweight implementation notes.',
-        colSpan: 3
-      },
-      {
         key: 'category',
         label: 'Category',
         type: 'dropdown',
@@ -123,124 +109,142 @@ export class FormFoundationDemoPageComponent {
         type: 'date',
         required: true
       },
-      // {
-      //   key: 'heroImage',
-      //   label: 'Image header',
-      //   type: 'image-header',
-      //   required: false,
-      //   accept: 'image/*',
-      //   profileType: false,
-      //   shape: 'circle',
-      //   size: 'md',
-      //   frameSizePx: 80,
-      //   defaultPosition: 'center',
-      //   multiple: true,
-      //   showLabels: true,
-      //   helperText: 'Supports optional validation, shared label display, multiple images, and horizontal scrolling when the header runs out of space.',
-      //   colSpan: 2
-      // },
-    
       {
-        key: 'supportingDoc',
-        label: 'Supporting file',
+        key: 'statusNote',
+        label: 'Status note',
+        type: 'textarea',
+        helperText: 'Sectionless fields render in the standard form area.',
+        colSpan: 3
+      },
+      {
+        key: 'supportingFiles',
+        label: 'File Attachments',
         type: 'file-upload',
         required: true,
-        accept: '.png,.jpg,.jpeg,.pdf,.doc,.docx,.xls,.xlsx',
+        multiple: true,
+        maxFiles: 4,
+        accept: '.png,.jpg,.jpeg,.pdf,.doc,.docx,.xls,.xlsx,.txt',
         allowAssignedFilename: true,
-        helperText: 'Styled upload with editable assigned filename, extension display, and preview action.',
-        colSpan: 2
+        helperText: 'This section can collapse.',
+        colSpan: 2,
+        section: {
+          key: 'review-details',
+          title: 'Review details',
+          collapsible: true,
+          collapsedByDefault: false
+        }
       },
       {
         key: 'notifyStakeholders',
         label: 'Notify stakeholders',
-        type: 'checkbox'
-      }
-    ]
-  };
-
-  protected readonly sectionedFormConfig: FormConfig = {
-    layout: 'sectioned',
-    fieldsPerLine: 2,
-    fieldSpacing: '1.25rem',
-    requireSubmitConfirmation: true,
-    submitConfirmationTitle: 'Submit sectioned demo?',
-    submitConfirmationMessage:
-      'This mirrors the foundation-level confirmation flow before feature-specific save logic exists.',
-    sections: [
-      {
-        key: 'basics',
-        title: 'Basics',
-        fields: [
-          {
-            key: 'recordTitle',
-            label: 'Record title',
-            type: 'text',
-            required: true
-          },
-          {
-            key: 'owner',
-            label: 'Owner',
-            type: 'text',
-            required: true
-          },
-          {
-            key: 'summary',
-            label: 'Summary',
-            type: 'textarea',
-            colSpan: 2,
-            required: true
-          }
-        ]
+        type: 'checkbox',
+        controlStyle: 'checkbox',
+        section: {
+          key: 'review-details',
+          title: 'Review details',
+          collapsible: true,
+          collapsedByDefault: false
+        }
       },
       {
-        key: 'ops',
-        title: 'Operational Notes',
-        collapsible: true,
-        collapsedByDefault: true,
-        fields: [
-          {
-            key: 'environment',
-            label: 'Environment',
-            type: 'dropdown',
-            required: true,
-            searchable: true,
-            allowOther: true,
-            placeholder: 'Select an environment',
-            options: [
-              { label: 'Development', value: 'dev' },
-              { label: 'QA', value: 'qa' },
-              { label: 'Staging', value: 'staging' },
-              { label: 'Production', value: 'prod' },
-              { label: 'Development1', value: 'dev1' },
-              { label: 'QA1', value: 'qa1' },
-              { label: 'Staging1', value: 'staging1' },
-              { label: 'Production1', value: 'prod1' }
-            ]
-          },
-          {
-            key: 'runbookLink',
-            label: 'Runbook URL',
-            type: 'text',
-            helperText: 'This remains plain text until richer field types arrive.'
-          },
-          {
-            key: 'attachments',
-            label: 'Attachments',
-            type: 'file-upload',
-            multiple: true,
-            maxFiles: 4,
-            accept: '.png,.jpg,.jpeg,.pdf,.doc,.docx,.xls,.xlsx,.txt',
-            allowAssignedFilename: true,
-            helperText: 'Supports images, Office docs, PDFs, text files, and other browser-openable uploads.',
-            colSpan: 2
-          },
-          {
-            key: 'approved',
-            label: 'Approved for release',
-            type: 'checkbox',
-            colSpan: 2
-          }
-        ]
+        key: 'approvedForRelease',
+        label: 'Approved for release',
+        type: 'checkbox',
+        controlStyle: 'toggle',
+        colSpan: 2,
+        section: {
+          key: 'review-details',
+          title: 'Review details',
+          collapsible: true,
+          collapsedByDefault: false
+        }
+      },
+      {
+        key: 'reviewOwner',
+        label: 'Review owner',
+        type: 'text',
+        required: true,
+        section: {
+          key: 'review-details',
+          title: 'Review details',
+          collapsible: true,
+          collapsedByDefault: false
+        }
+      },
+      {
+        key: 'reviewNotes',
+        label: 'Review notes',
+        type: 'textarea',
+        helperText: 'This section can collapse.',
+        colSpan: 2,
+        section: {
+          key: 'review-details',
+          title: 'Review details',
+          collapsible: true,
+          collapsedByDefault: false
+        }
+      },
+      {
+        key: 'deploymentWindow',
+        label: 'Deployment window',
+        type: 'text',
+        helperText: 'Release controls are in an always-open section.',
+        section: {
+          key: 'release-controls',
+          title: 'Release controls'
+        }
+      },
+      {
+        key: 'releaseManager',
+        label: 'Release manager',
+        type: 'text',
+        required: true,
+        section: {
+          key: 'release-controls',
+          title: 'Release controls'
+        }
+      },
+      {
+        key: 'releaseDate',
+        label: 'Release date',
+        type: 'date',
+        required: true,
+        section: {
+          key: 'release-controls',
+          title: 'Release controls'
+        }
+      },
+      {
+        key: 'releaseRiskScore',
+        label: 'Release risk score',
+        type: 'number',
+        min: 1,
+        max: 5,
+        step: 1,
+        section: {
+          key: 'release-controls',
+          title: 'Release controls'
+        }
+      },
+      {
+        key: 'escalationRequired',
+        label: 'Escalation required',
+        type: 'checkbox',
+        controlStyle: 'toggle',
+        section: {
+          key: 'release-controls',
+          title: 'Release controls'
+        }
+      },
+      {
+        key: 'rollbackReady',
+        label: 'Rollback ready',
+        type: 'checkbox',
+        controlStyle: 'checkbox',
+        section: {
+          key: 'release-controls',
+          title: 'Release controls'
+        }
       }
     ]
   };

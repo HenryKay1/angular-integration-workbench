@@ -18,6 +18,7 @@ import { UploadedFileItem } from '../form-shell/form-config.model';
   styleUrl: './file-upload-field.component.css'
 })
 export class FileUploadFieldComponent implements ControlValueAccessor, OnDestroy {
+  @Input() label?: string;
   @Input() multiple = false;
   @Input() maxFiles?: number;
   @Input() accept?: string;
@@ -25,8 +26,6 @@ export class FileUploadFieldComponent implements ControlValueAccessor, OnDestroy
 
   protected items: UploadedFileItem[] = [];
   protected disabled = false;
-  protected activePreview: UploadedFileItem | null = null;
-  protected activePreviewText = '';
 
   private onChange: (value: UploadedFileItem[] | UploadedFileItem | null) => void = () => undefined;
   private onTouched: () => void = () => undefined;
@@ -44,7 +43,6 @@ export class FileUploadFieldComponent implements ControlValueAccessor, OnDestroy
 
     if (!value) {
       this.items = [];
-      this.closePreview();
       return;
     }
 
@@ -90,50 +88,18 @@ export class FileUploadFieldComponent implements ControlValueAccessor, OnDestroy
     this.emitValue();
   }
 
-  protected updateAssignedName(itemId: string, assignedName: string): void {
-    this.items = this.items.map((item) =>
-      item.id === itemId
-        ? {
-            ...item,
-            assignedName
-          }
-        : item
-    );
-
-    if (this.activePreview?.id === itemId) {
-      this.activePreview = this.items.find((item) => item.id === itemId) ?? null;
-    }
-
-    this.emitValue();
-  }
-
-  protected previewItem(item: UploadedFileItem): void {
+  protected downloadItem(item: UploadedFileItem): void {
     if (!item.previewUrl) {
       return;
     }
 
-    if (this.isImage(item) || this.isPdf(item)) {
-      this.activePreview = item;
-      this.activePreviewText = '';
-      return;
-    }
-
-    if (this.isText(item) && item.file) {
-      this.activePreview = item;
-      item.file.text().then((content) => {
-        if (this.activePreview?.id === item.id) {
-          this.activePreviewText = content;
-        }
-      });
-      return;
-    }
-
-    window.open(item.previewUrl, '_blank', 'noopener');
-  }
-
-  protected closePreview(): void {
-    this.activePreview = null;
-    this.activePreviewText = '';
+    const link = document.createElement('a');
+    link.href = item.previewUrl;
+    link.download = item.originalName;
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   }
 
   protected removeItem(itemId: string): void {
@@ -145,27 +111,11 @@ export class FileUploadFieldComponent implements ControlValueAccessor, OnDestroy
 
     this.items = this.items.filter((item) => item.id !== itemId);
 
-    if (this.activePreview?.id === itemId) {
-      this.closePreview();
-    }
-
     this.emitValue();
   }
 
   protected trackItemById(_: number, item: UploadedFileItem): string {
     return item.id;
-  }
-
-  protected isImage(item: UploadedFileItem): boolean {
-    return item.mimeType.startsWith('image/');
-  }
-
-  protected isPdf(item: UploadedFileItem): boolean {
-    return item.mimeType === 'application/pdf' || item.extension === 'PDF';
-  }
-
-  protected isText(item: UploadedFileItem): boolean {
-    return item.mimeType.startsWith('text/');
   }
 
   protected formatFileSize(size: number): string {
