@@ -133,5 +133,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
                 .OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(selection => new { selection.LineItemId, selection.ProductOptionId }).IsUnique();
         });
+
+        modelBuilder.SeedMilestoneOneData();
     }
 }
