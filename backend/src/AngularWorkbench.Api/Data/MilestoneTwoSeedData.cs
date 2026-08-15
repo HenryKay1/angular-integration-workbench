@@ -7,6 +7,28 @@ public static class MilestoneTwoSeedData
 {
     public static void SeedMilestoneTwoData(this ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<LookupCategory>().HasData(
+            new LookupCategory { LookupCategoryId = 1, Name = "Access Scope", Code = "ACCESS_SCOPE", IsActive = true },
+            new LookupCategory { LookupCategoryId = 2, Name = "Company Scope", Code = "COMPANY_SCOPE", IsActive = true },
+            new LookupCategory { LookupCategoryId = 3, Name = "Country", Code = "COUNTRY", IsActive = true },
+            new LookupCategory { LookupCategoryId = 4, Name = "State", Code = "STATE", IsActive = true },
+            new LookupCategory { LookupCategoryId = 5, Name = "City", Code = "CITY", IsActive = true });
+
+        modelBuilder.Entity<Lookup>().HasData(
+            new Lookup { LookupId = 1, LookupCategoryId = 1, Name = "Global", Code = "GLOBAL", SortOrder = 10, IsActive = true },
+            new Lookup { LookupId = 2, LookupCategoryId = 1, Name = "Company", Code = "COMPANY", SortOrder = 20, IsActive = true },
+            new Lookup { LookupId = 3, LookupCategoryId = 1, Name = "Region", Code = "REGION", SortOrder = 30, IsActive = true },
+            new Lookup { LookupId = 4, LookupCategoryId = 2, Name = "Internal", Code = "INTERNAL", SortOrder = 10, IsActive = true },
+            new Lookup { LookupId = 5, LookupCategoryId = 2, Name = "External", Code = "EXTERNAL", SortOrder = 20, IsActive = true },
+            new Lookup { LookupId = 6, LookupCategoryId = 2, Name = "Both", Code = "BOTH", SortOrder = 30, IsActive = true },
+            new Lookup { LookupId = 7, LookupCategoryId = 3, Name = "United States", Code = "US", SortOrder = 10, IsActive = true },
+            new Lookup { LookupId = 8, LookupCategoryId = 4, ParentLookupId = 7, Name = "Texas", Code = "TX", SortOrder = 10, IsActive = true },
+            new Lookup { LookupId = 9, LookupCategoryId = 4, ParentLookupId = 7, Name = "Georgia", Code = "GA", SortOrder = 20, IsActive = true },
+            new Lookup { LookupId = 10, LookupCategoryId = 5, ParentLookupId = 8, Name = "Dallas", Code = "DALLAS", SortOrder = 10, IsActive = true },
+            new Lookup { LookupId = 11, LookupCategoryId = 5, ParentLookupId = 8, Name = "Garland", Code = "GARLAND", SortOrder = 20, IsActive = true },
+            new Lookup { LookupId = 12, LookupCategoryId = 5, ParentLookupId = 8, Name = "Fort Worth", Code = "FORT_WORTH", SortOrder = 30, IsActive = true },
+            new Lookup { LookupId = 13, LookupCategoryId = 5, ParentLookupId = 9, Name = "Atlanta", Code = "ATLANTA", SortOrder = 10, IsActive = true });
+
         modelBuilder.Entity<Region>().HasData(
             new Region { RegionId = 1, Name = "Southwest", Code = "SW", IsActive = true },
             new Region { RegionId = 2, Name = "Southeast", Code = "SE", IsActive = true },
@@ -22,28 +44,28 @@ public static class MilestoneTwoSeedData
             {
                 AddressId = 1,
                 AddressLine1 = "123 Example Rd",
-                City = "Dallas",
-                State = "TX",
                 PostalCode = "75001",
-                Country = "USA"
+                CountryLookupId = 7,
+                StateLookupId = 8,
+                CityLookupId = 10
             },
             new Address
             {
                 AddressId = 2,
                 AddressLine1 = "456 Peachtree St",
-                City = "Atlanta",
-                State = "GA",
                 PostalCode = "30303",
-                Country = "USA"
+                CountryLookupId = 7,
+                StateLookupId = 9,
+                CityLookupId = 13
             },
             new Address
             {
                 AddressId = 3,
                 AddressLine1 = "789 Mechanical Way",
-                City = "Fort Worth",
-                State = "TX",
                 PostalCode = "76102",
-                Country = "USA"
+                CountryLookupId = 7,
+                StateLookupId = 8,
+                CityLookupId = 12
             });
 
         modelBuilder.Entity<Location>().HasData(
@@ -52,13 +74,13 @@ public static class MilestoneTwoSeedData
             new Location { LocationId = 3, CompanyId = 2, RegionId = 1, AddressId = 3, Name = "Fort Worth Office", Code = "FTW", IsActive = true });
 
         modelBuilder.Entity<Role>().HasData(
-            new Role { RoleId = 1, Name = "Administrator", Description = "Full internal administrative access.", CompanyScope = CompanyScope.Internal, IsActive = true },
-            new Role { RoleId = 2, Name = "Engineer", Description = "Internal engineering and configuration access.", CompanyScope = CompanyScope.Internal, IsActive = true },
-            new Role { RoleId = 3, Name = "Sales", Description = "Internal sales access.", CompanyScope = CompanyScope.Internal, IsActive = true },
-            new Role { RoleId = 4, Name = "Project Manager", Description = "Internal project coordination access.", CompanyScope = CompanyScope.Internal, IsActive = true },
-            new Role { RoleId = 5, Name = "Customer Admin", Description = "External customer administration access.", CompanyScope = CompanyScope.External, IsActive = true },
-            new Role { RoleId = 6, Name = "Customer User", Description = "External customer project access.", CompanyScope = CompanyScope.External, IsActive = true },
-            new Role { RoleId = 7, Name = "Viewer", Description = "Read-focused access shared across company types.", CompanyScope = CompanyScope.Both, IsActive = true });
+            new Role { RoleId = 1, Name = "Administrator", Description = "Full internal administrative access.", CompanyScopeLookupId = 4, HasAllPermissions = true, IsActive = true },
+            new Role { RoleId = 2, Name = "Engineer", Description = "Internal engineering and configuration access.", CompanyScopeLookupId = 4, HasAllPermissions = false, IsActive = true },
+            new Role { RoleId = 3, Name = "Sales", Description = "Internal sales access.", CompanyScopeLookupId = 4, HasAllPermissions = false, IsActive = true },
+            new Role { RoleId = 4, Name = "Project Manager", Description = "Internal project coordination access.", CompanyScopeLookupId = 4, HasAllPermissions = false, IsActive = true },
+            new Role { RoleId = 5, Name = "Customer Admin", Description = "External customer administration access.", CompanyScopeLookupId = 5, HasAllPermissions = false, IsActive = true },
+            new Role { RoleId = 6, Name = "Customer User", Description = "External customer project access.", CompanyScopeLookupId = 5, HasAllPermissions = false, IsActive = true },
+            new Role { RoleId = 7, Name = "Viewer", Description = "Read-focused access shared across company types.", CompanyScopeLookupId = 6, HasAllPermissions = false, IsActive = true });
 
         modelBuilder.Entity<Permission>().HasData(
             new Permission { PermissionId = 1, Code = "Project.View", Name = "View projects" },
@@ -78,8 +100,9 @@ public static class MilestoneTwoSeedData
             new Permission { PermissionId = 15, Code = "User.Manage", Name = "Manage users" });
 
         modelBuilder.Entity<AppUserRole>().HasData(
-            new AppUserRole { AppUserId = 1, RoleId = 1 },
-            new AppUserRole { AppUserId = 1, RoleId = 2 });
+            new AppUserRole { AppUserRoleId = 1, AppUserId = 1, RoleId = 1, AccessScopeLookupId = 1 },
+            new AppUserRole { AppUserRoleId = 2, AppUserId = 1, RoleId = 2, AccessScopeLookupId = 3, RegionId = 1 },
+            new AppUserRole { AppUserRoleId = 3, AppUserId = 1, RoleId = 2, AccessScopeLookupId = 3, RegionId = 2 });
 
         modelBuilder.Entity<RolePermission>().HasData(
             new RolePermission { RoleId = 1, PermissionId = 1 },

@@ -47,11 +47,12 @@ public sealed class MilestoneTwoModelSmokeTests
                 .Include(item => item.Company)
                 .Include(item => item.Region)
                 .Include(item => item.Address)
+                .ThenInclude(address => address.City)
                 .SingleAsync(item => item.Code == "DAL-HQ");
 
             Assert.Equal("Workbench Industries", location.Company.Name);
             Assert.Equal("Southwest", location.Region.Name);
-            Assert.Equal("Dallas", location.Address.City);
+            Assert.Equal("Dallas", location.Address.City!.Name);
         });
     }
 
@@ -80,8 +81,8 @@ public sealed class MilestoneTwoModelSmokeTests
             var internalUser = await context.AppUsers
                 .Include(item => item.Company)
                 .SingleAsync(item => item.Email == "avery.morgan@example.com");
-            var internalRole = await context.Roles.SingleAsync(item => item.Name == "Engineer");
-            var viewerRole = await context.Roles.SingleAsync(item => item.Name == "Viewer");
+            var internalRole = await context.Roles.Include(item => item.CompanyScope).SingleAsync(item => item.Name == "Engineer");
+            var viewerRole = await context.Roles.Include(item => item.CompanyScope).SingleAsync(item => item.Name == "Viewer");
 
             var externalUser = new AppUser
             {
@@ -91,7 +92,7 @@ public sealed class MilestoneTwoModelSmokeTests
                 Company = await context.Companies.SingleAsync(item => item.Code == "ABC-MECH"),
                 CreatedUtc = new DateTime(2026, 08, 15, 12, 0, 0, DateTimeKind.Utc)
             };
-            var externalRole = await context.Roles.SingleAsync(item => item.Name == "Customer User");
+            var externalRole = await context.Roles.Include(item => item.CompanyScope).SingleAsync(item => item.Name == "Customer User");
 
             Assert.True(RoleAssignmentValidator.CanAssignRole(internalUser, internalRole));
             Assert.True(RoleAssignmentValidator.CanAssignRole(internalUser, viewerRole));
@@ -113,7 +114,7 @@ public sealed class MilestoneTwoModelSmokeTests
                 Company = await context.Companies.SingleAsync(item => item.Code == "ABC-MECH"),
                 CreatedUtc = new DateTime(2026, 08, 15, 12, 0, 0, DateTimeKind.Utc)
             };
-            var internalRole = await context.Roles.SingleAsync(item => item.Name == "Engineer");
+            var internalRole = await context.Roles.Include(item => item.CompanyScope).SingleAsync(item => item.Name == "Engineer");
 
             Assert.False(RoleAssignmentValidator.CanAssignRole(externalUser, internalRole));
             Assert.Throws<InvalidOperationException>(() => RoleAssignmentValidator.ValidateCanAssignRole(externalUser, internalRole));
@@ -132,7 +133,7 @@ public sealed class MilestoneTwoModelSmokeTests
                 .ThenInclude(rolePermission => rolePermission.Permission)
                 .SingleAsync(item => item.Email == "avery.morgan@example.com");
 
-            Assert.Equal(["Administrator", "Engineer"], user.UserRoles.Select(userRole => userRole.Role.Name).Order());
+            Assert.Equal(["Administrator", "Engineer"], user.UserRoles.Select(userRole => userRole.Role.Name).Distinct().Order());
 
             var permissionCodes = user.UserRoles
                 .SelectMany(userRole => userRole.Role.RolePermissions)

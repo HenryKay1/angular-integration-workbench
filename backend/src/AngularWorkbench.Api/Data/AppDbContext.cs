@@ -10,6 +10,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<AppUserRole> AppUserRoles => Set<AppUserRole>();
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<Location> Locations => Set<Location>();
+    public DbSet<Lookup> Lookups => Set<Lookup>();
+    public DbSet<LookupCategory> LookupCategories => Set<LookupCategory>();
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<Region> Regions => Set<Region>();
@@ -48,15 +50,24 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.HasKey(address => address.AddressId);
             entity.Property(address => address.AddressLine1).HasMaxLength(200);
             entity.Property(address => address.AddressLine2).HasMaxLength(200);
-            entity.Property(address => address.City).HasMaxLength(100);
-            entity.Property(address => address.State).HasMaxLength(80);
             entity.Property(address => address.PostalCode).HasMaxLength(20);
-            entity.Property(address => address.Country).HasMaxLength(100);
+            entity.HasOne(address => address.Country)
+                .WithMany(lookup => lookup.CountryAddresses)
+                .HasForeignKey(address => address.CountryLookupId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(address => address.State)
+                .WithMany(lookup => lookup.StateAddresses)
+                .HasForeignKey(address => address.StateLookupId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(address => address.City)
+                .WithMany(lookup => lookup.CityAddresses)
+                .HasForeignKey(address => address.CityLookupId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<AppUserRole>(entity =>
         {
-            entity.HasKey(userRole => new { userRole.AppUserId, userRole.RoleId });
+            entity.HasKey(userRole => userRole.AppUserRoleId);
             entity.HasOne(userRole => userRole.AppUser)
                 .WithMany(user => user.UserRoles)
                 .HasForeignKey(userRole => userRole.AppUserId)
@@ -65,6 +76,23 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
                 .WithMany(role => role.UserRoles)
                 .HasForeignKey(userRole => userRole.RoleId)
                 .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(userRole => userRole.AccessScope)
+                .WithMany(lookup => lookup.AccessScopeUserRoles)
+                .HasForeignKey(userRole => userRole.AccessScopeLookupId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(userRole => userRole.Company)
+                .WithMany()
+                .HasForeignKey(userRole => userRole.CompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(userRole => userRole.Region)
+                .WithMany()
+                .HasForeignKey(userRole => userRole.RegionId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(userRole => userRole.AppUserId);
+            entity.HasIndex(userRole => userRole.RoleId);
+            entity.HasIndex(userRole => userRole.AccessScopeLookupId);
+            entity.HasIndex(userRole => userRole.CompanyId);
+            entity.HasIndex(userRole => userRole.RegionId);
         });
 
         modelBuilder.Entity<Company>(entity =>
@@ -98,6 +126,32 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.HasIndex(location => location.AddressId).IsUnique();
         });
 
+        modelBuilder.Entity<LookupCategory>(entity =>
+        {
+            entity.HasKey(category => category.LookupCategoryId);
+            entity.Property(category => category.Name).HasMaxLength(150).IsRequired();
+            entity.Property(category => category.Code).HasMaxLength(80).IsRequired();
+            entity.HasIndex(category => category.Code).IsUnique();
+        });
+
+        modelBuilder.Entity<Lookup>(entity =>
+        {
+            entity.HasKey(lookup => lookup.LookupId);
+            entity.Property(lookup => lookup.Name).HasMaxLength(150).IsRequired();
+            entity.Property(lookup => lookup.Code).HasMaxLength(80).IsRequired();
+            entity.HasOne(lookup => lookup.LookupCategory)
+                .WithMany(category => category.Lookups)
+                .HasForeignKey(lookup => lookup.LookupCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(lookup => lookup.ParentLookup)
+                .WithMany(lookup => lookup.Children)
+                .HasForeignKey(lookup => lookup.ParentLookupId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(lookup => lookup.LookupCategoryId);
+            entity.HasIndex(lookup => lookup.ParentLookupId);
+            entity.HasIndex(lookup => new { lookup.LookupCategoryId, lookup.Code }).IsUnique();
+        });
+
         modelBuilder.Entity<Permission>(entity =>
         {
             entity.HasKey(permission => permission.PermissionId);
@@ -121,10 +175,11 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.HasKey(role => role.RoleId);
             entity.Property(role => role.Name).HasMaxLength(150).IsRequired();
             entity.Property(role => role.Description).HasMaxLength(1000);
-            entity.Property(role => role.CompanyScope)
-                .HasConversion<string>()
-                .HasMaxLength(20)
-                .IsRequired();
+            entity.HasOne(role => role.CompanyScope)
+                .WithMany(lookup => lookup.CompanyScopeRoles)
+                .HasForeignKey(role => role.CompanyScopeLookupId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(role => role.CompanyScopeLookupId);
         });
 
         modelBuilder.Entity<RolePermission>(entity =>
