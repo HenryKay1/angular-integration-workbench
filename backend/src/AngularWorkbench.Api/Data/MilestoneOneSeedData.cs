@@ -17,7 +17,9 @@ public static class MilestoneOneSeedData
                 LastName = "Morgan",
                 Email = "avery.morgan@example.com",
                 IsActive = true,
-                CreatedUtc = SeededUtc
+                CreatedUtc = SeededUtc,
+                CompanyId = 1,
+                LocationId = 1
             });
 
         modelBuilder.Entity<ProductType>().HasData(

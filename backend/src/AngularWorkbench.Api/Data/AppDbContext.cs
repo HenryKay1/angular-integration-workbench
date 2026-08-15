@@ -6,7 +6,15 @@ namespace AngularWorkbench.Api.Data;
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<AppUser> AppUsers => Set<AppUser>();
+    public DbSet<Address> Addresses => Set<Address>();
+    public DbSet<AppUserRole> AppUserRoles => Set<AppUserRole>();
+    public DbSet<Company> Companies => Set<Company>();
+    public DbSet<Location> Locations => Set<Location>();
+    public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<Project> Projects => Set<Project>();
+    public DbSet<Region> Regions => Set<Region>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<Schedule> Schedules => Set<Schedule>();
     public DbSet<LineItem> LineItems => Set<LineItem>();
     public DbSet<ProductType> ProductTypes => Set<ProductType>();
@@ -25,6 +33,111 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(user => user.LastName).HasMaxLength(100).IsRequired();
             entity.Property(user => user.Email).HasMaxLength(320).IsRequired();
             entity.HasIndex(user => user.Email).IsUnique();
+            entity.HasOne(user => user.Company)
+                .WithMany(company => company.AppUsers)
+                .HasForeignKey(user => user.CompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(user => user.Location)
+                .WithMany(location => location.AppUsers)
+                .HasForeignKey(user => user.LocationId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Address>(entity =>
+        {
+            entity.HasKey(address => address.AddressId);
+            entity.Property(address => address.AddressLine1).HasMaxLength(200);
+            entity.Property(address => address.AddressLine2).HasMaxLength(200);
+            entity.Property(address => address.City).HasMaxLength(100);
+            entity.Property(address => address.State).HasMaxLength(80);
+            entity.Property(address => address.PostalCode).HasMaxLength(20);
+            entity.Property(address => address.Country).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<AppUserRole>(entity =>
+        {
+            entity.HasKey(userRole => new { userRole.AppUserId, userRole.RoleId });
+            entity.HasOne(userRole => userRole.AppUser)
+                .WithMany(user => user.UserRoles)
+                .HasForeignKey(userRole => userRole.AppUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(userRole => userRole.Role)
+                .WithMany(role => role.UserRoles)
+                .HasForeignKey(userRole => userRole.RoleId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Company>(entity =>
+        {
+            entity.HasKey(company => company.CompanyId);
+            entity.Property(company => company.Name).HasMaxLength(200).IsRequired();
+            entity.Property(company => company.Code).HasMaxLength(50);
+            entity.HasIndex(company => company.Code).IsUnique()
+                .HasFilter("[Code] IS NOT NULL");
+        });
+
+        modelBuilder.Entity<Location>(entity =>
+        {
+            entity.HasKey(location => location.LocationId);
+            entity.Property(location => location.Name).HasMaxLength(200).IsRequired();
+            entity.Property(location => location.Code).HasMaxLength(50);
+            entity.HasOne(location => location.Company)
+                .WithMany(company => company.Locations)
+                .HasForeignKey(location => location.CompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(location => location.Region)
+                .WithMany(region => region.Locations)
+                .HasForeignKey(location => location.RegionId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(location => location.Address)
+                .WithOne(address => address.Location)
+                .HasForeignKey<Location>(location => location.AddressId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(location => new { location.CompanyId, location.Code }).IsUnique()
+                .HasFilter("[Code] IS NOT NULL");
+            entity.HasIndex(location => location.AddressId).IsUnique();
+        });
+
+        modelBuilder.Entity<Permission>(entity =>
+        {
+            entity.HasKey(permission => permission.PermissionId);
+            entity.Property(permission => permission.Code).HasMaxLength(100).IsRequired();
+            entity.Property(permission => permission.Name).HasMaxLength(150).IsRequired();
+            entity.Property(permission => permission.Description).HasMaxLength(1000);
+            entity.HasIndex(permission => permission.Code).IsUnique();
+        });
+
+        modelBuilder.Entity<Region>(entity =>
+        {
+            entity.HasKey(region => region.RegionId);
+            entity.Property(region => region.Name).HasMaxLength(150).IsRequired();
+            entity.Property(region => region.Code).HasMaxLength(50);
+            entity.HasIndex(region => region.Code).IsUnique()
+                .HasFilter("[Code] IS NOT NULL");
+        });
+
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.HasKey(role => role.RoleId);
+            entity.Property(role => role.Name).HasMaxLength(150).IsRequired();
+            entity.Property(role => role.Description).HasMaxLength(1000);
+            entity.Property(role => role.CompanyScope)
+                .HasConversion<string>()
+                .HasMaxLength(20)
+                .IsRequired();
+        });
+
+        modelBuilder.Entity<RolePermission>(entity =>
+        {
+            entity.HasKey(rolePermission => new { rolePermission.RoleId, rolePermission.PermissionId });
+            entity.HasOne(rolePermission => rolePermission.Role)
+                .WithMany(role => role.RolePermissions)
+                .HasForeignKey(rolePermission => rolePermission.RoleId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(rolePermission => rolePermission.Permission)
+                .WithMany(permission => permission.RolePermissions)
+                .HasForeignKey(rolePermission => rolePermission.PermissionId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Project>(entity =>
@@ -134,6 +247,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.HasIndex(selection => new { selection.LineItemId, selection.ProductOptionId }).IsUnique();
         });
 
+        modelBuilder.SeedMilestoneTwoData();
         modelBuilder.SeedMilestoneOneData();
     }
 }
