@@ -19,7 +19,7 @@ public sealed class MilestoneTwoModelSmokeTests
                 .SingleAsync(item => item.Code == "WORKBENCH");
 
             Assert.Equal(2, company.Locations.Count);
-            Assert.Equal(["Southeast", "Southwest"], company.Locations.Select(location => location.Region.Name).Order());
+            Assert.Equal(["Southeast", "Southwest"], company.Locations.Select(location => location.Region.Name).OrderBy(item => item));
         });
     }
 
@@ -133,13 +133,13 @@ public sealed class MilestoneTwoModelSmokeTests
                 .ThenInclude(rolePermission => rolePermission.Permission)
                 .SingleAsync(item => item.Email == "avery.morgan@example.com");
 
-            Assert.Equal(["Administrator", "Engineer"], user.UserRoles.Select(userRole => userRole.Role.Name).Distinct().Order());
+            Assert.Equal(["Administrator", "Engineer"], user.UserRoles.Select(userRole => userRole.Role.Name).Distinct().OrderBy(item => item));
 
             var permissionCodes = user.UserRoles
                 .SelectMany(userRole => userRole.Role.RolePermissions)
                 .Select(rolePermission => rolePermission.Permission.Code)
                 .Distinct()
-                .Order()
+                .OrderBy(item => item)
                 .ToArray();
 
             Assert.Contains("Project.View", permissionCodes);
