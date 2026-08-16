@@ -1,0 +1,14 @@
+.dashboard-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.dashboard-page__intro h2,
+.dashboard-page__intro p {
+  margin: 0;
+}
+
+.dashboard-page__intro p {
+  margin-top: 0.35rem;
+  color: #52657a;
+}

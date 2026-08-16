@@ -1,18 +1,28 @@
-    <main class="shell">
-      <header class="shell__header">
-        <div>
+<main class="shell" [class.shell--nav-open]="isNavigationOpen">
+  <header class="shell__header">
+    <div class="shell__brand">
+      <div class="shell__logo" aria-hidden="true">A</div>
+
+      <div>
           <h1>Angular Integration Workbench</h1>
           <p>Enterprise-flavored mock integration explorer</p>
-        </div>
+      </div>
+    </div>
+  </header>
 
-        <nav class="shell__nav">
-          <a routerLink="/" routerLinkActive="shell__link--active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
-          <a routerLink="/forms" routerLinkActive="shell__link--active">Forms</a>
-          <a routerLink="/records" routerLinkActive="shell__link--active">Records</a>
-        </nav>
-      </header>
+  <aside class="shell__navigation-layer">
+    <aiw-navigation
+      [sections]="mainNavigationSections"
+      [sidebarOpen]="isNavigationOpen"
+      [homeRoute]="'/'"
+      homeLabel="Dashboard"
+      appName="Angular Workbench"
+      (collapsed)="closeNavigation()"
+      (expanded)="openNavigation()"
+    />
+  </aside>
 
-      <section class="shell__content">
-        <router-outlet />
-      </section>
-    </main>
+  <section class="shell__content">
+    <router-outlet />
+  </section>
+</main>

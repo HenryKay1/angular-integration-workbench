@@ -1,0 +1,99 @@
+<div class="workbench-nav-shell" [class.workbench-nav-shell--collapsed]="!sidebarOpen">
+  <nav class="workbench-nav" [class.workbench-nav--collapsed]="!sidebarOpen" [attr.aria-label]="appName + ' navigation'">
+    <div class="workbench-nav__top">
+      <button
+        type="button"
+        class="workbench-nav__collapse"
+        [attr.aria-label]="sidebarOpen ? 'Collapse navigation' : 'Expand navigation'"
+        [attr.title]="sidebarOpen ? 'Collapse navigation' : 'Expand navigation'"
+        (click)="sidebarOpen ? collapseNavigation() : expandNavigation()"
+      >
+        <img
+          [src]="sidebarOpen ? 'assets/images/icons/sidebar-collapse-chevron.svg' : 'assets/images/icons/sidebar-expand.svg'"
+          alt=""
+          aria-hidden="true"
+        />
+      </button>
+    </div>
+
+    <div class="workbench-nav__sections">
+      <section class="workbench-nav__section" *ngFor="let section of visibleSections">
+        <h2>{{ section.label }}</h2>
+        <ng-container *ngTemplateOutlet="navItems; context: { $implicit: section.items, depth: 0 }" />
+      </section>
+    </div>
+  </nav>
+
+  <div class="workbench-nav__breadcrumb-rail" *ngIf="showBreadcrumb">
+    <div class="workbench-nav__breadcrumb-label" aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        <path d="M4 5h6v6H4V5Zm10 0h6v6h-6V5ZM4 15h6v4H4v-4Zm10 0h6v4h-6v-4Z" />
+      </svg>
+    </div>
+
+    <ol class="workbench-nav__breadcrumb">
+      <li>
+        <a [routerLink]="homeRoute" [attr.aria-label]="homeLabel">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path [attr.d]="iconPath('home')" />
+          </svg>
+        </a>
+      </li>
+      <li *ngFor="let item of routerBreadcrumbs; let isLast = last">
+        <button type="button" [disabled]="isLast" (click)="navigateBreadcrumb(item.route)">
+          {{ item.label }}
+        </button>
+      </li>
+    </ol>
+  </div>
+</div>
+
+<ng-template #navItems let-list let-depth="depth">
+  <ul class="workbench-nav__list" [class.workbench-nav__list--nested]="depth > 0">
+    <li class="workbench-nav__item" *ngFor="let item of list" [class.workbench-nav__item--active]="isActive(item)">
+      <div class="workbench-nav__row">
+        <a
+          class="workbench-nav__link"
+          *ngIf="getRoute(item) as route; else buttonItem"
+          [routerLink]="route"
+          [attr.title]="!sidebarOpen ? item.label : null"
+          (click)="selectItem(item)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" [attr.fill]="iconFill(item.icon)">
+            <path [attr.d]="iconPath(item.icon)" />
+          </svg>
+          <span>{{ item.label }}</span>
+        </a>
+
+        <ng-template #buttonItem>
+          <button type="button" class="workbench-nav__link" [attr.title]="!sidebarOpen ? item.label : null" (click)="selectItem(item)">
+            <svg viewBox="0 0 24 24" aria-hidden="true" [attr.fill]="iconFill(item.icon)">
+              <path [attr.d]="iconPath(item.icon)" />
+            </svg>
+            <span>{{ item.label }}</span>
+          </button>
+        </ng-template>
+
+        <button
+          type="button"
+          class="workbench-nav__toggle"
+          *ngIf="sidebarOpen && hasChildren(item)"
+          [attr.aria-label]="isExpanded(item) ? 'Collapse ' + item.label : 'Expand ' + item.label"
+          [attr.aria-expanded]="isExpanded(item)"
+          (click)="toggleItem(item, $event)"
+        >
+          <img
+            [src]="isExpanded(item) ? 'assets/images/icons/circle-chevron-up.svg' : 'assets/images/icons/circle-chevron-down.svg'"
+            alt=""
+            aria-hidden="true"
+          />
+        </button>
+
+      </div>
+
+      <ng-container *ngIf="hasChildren(item) && isExpanded(item)">
+        <ng-container *ngTemplateOutlet="navItems; context: { $implicit: item.children, depth: depth + 1 }" />
+      </ng-container>
+    </li>
+  </ul>
+</ng-template>
