@@ -16,4 +16,10 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Repositories\Projects\" />
+    <Folder Include="Services\Catalog\Interfaces\" />
+    <Folder Include="Services\Product\Interfaces\" />
+  </ItemGroup>
+
 </Project>

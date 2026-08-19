@@ -4,6 +4,7 @@ using AngularWorkbench.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AngularWorkbench.Api.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260819174822_AddGeographyTables")]
+    partial class AddGeographyTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -41,7 +44,13 @@ namespace AngularWorkbench.Api.Data.Migrations
                     b.Property<int?>("CityId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("CityLookupId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("CountryId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CountryLookupId")
                         .HasColumnType("int");
 
                     b.Property<string>("PostalCode")
@@ -51,13 +60,22 @@ namespace AngularWorkbench.Api.Data.Migrations
                     b.Property<int?>("StateId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("StateLookupId")
+                        .HasColumnType("int");
+
                     b.HasKey("AddressId");
 
                     b.HasIndex("CityId");
 
+                    b.HasIndex("CityLookupId");
+
                     b.HasIndex("CountryId");
 
+                    b.HasIndex("CountryLookupId");
+
                     b.HasIndex("StateId");
+
+                    b.HasIndex("StateLookupId");
 
                     b.ToTable("Addresses");
 
@@ -66,28 +84,28 @@ namespace AngularWorkbench.Api.Data.Migrations
                         {
                             AddressId = 1,
                             AddressLine1 = "123 Example Rd",
-                            CityId = 1,
-                            CountryId = 1,
+                            CityLookupId = 10,
+                            CountryLookupId = 7,
                             PostalCode = "75001",
-                            StateId = 1
+                            StateLookupId = 8
                         },
                         new
                         {
                             AddressId = 2,
                             AddressLine1 = "456 Peachtree St",
-                            CityId = 4,
-                            CountryId = 1,
+                            CityLookupId = 13,
+                            CountryLookupId = 7,
                             PostalCode = "30303",
-                            StateId = 2
+                            StateLookupId = 9
                         },
                         new
                         {
                             AddressId = 3,
                             AddressLine1 = "789 Mechanical Way",
-                            CityId = 3,
-                            CountryId = 1,
+                            CityLookupId = 12,
+                            CountryLookupId = 7,
                             PostalCode = "76102",
-                            StateId = 1
+                            StateLookupId = 8
                         });
                 });
 
@@ -628,6 +646,82 @@ namespace AngularWorkbench.Api.Data.Migrations
                             Name = "Both",
                             SortOrder = 30,
                             Value = 3
+                        },
+                        new
+                        {
+                            LookupId = 7,
+                            Code = "US",
+                            IsActive = true,
+                            LookupCategoryId = 3,
+                            Name = "United States",
+                            SortOrder = 10,
+                            Value = 1
+                        },
+                        new
+                        {
+                            LookupId = 8,
+                            Code = "TX",
+                            IsActive = true,
+                            LookupCategoryId = 4,
+                            Name = "Texas",
+                            ParentLookupId = 7,
+                            SortOrder = 10,
+                            Value = 1
+                        },
+                        new
+                        {
+                            LookupId = 9,
+                            Code = "GA",
+                            IsActive = true,
+                            LookupCategoryId = 4,
+                            Name = "Georgia",
+                            ParentLookupId = 7,
+                            SortOrder = 20,
+                            Value = 2
+                        },
+                        new
+                        {
+                            LookupId = 10,
+                            Code = "DALLAS",
+                            IsActive = true,
+                            LookupCategoryId = 5,
+                            Name = "Dallas",
+                            ParentLookupId = 8,
+                            SortOrder = 10,
+                            Value = 1
+                        },
+                        new
+                        {
+                            LookupId = 11,
+                            Code = "GARLAND",
+                            IsActive = true,
+                            LookupCategoryId = 5,
+                            Name = "Garland",
+                            ParentLookupId = 8,
+                            SortOrder = 20,
+                            Value = 2
+                        },
+                        new
+                        {
+                            LookupId = 12,
+                            Code = "FORT_WORTH",
+                            IsActive = true,
+                            LookupCategoryId = 5,
+                            Name = "Fort Worth",
+                            ParentLookupId = 8,
+                            SortOrder = 30,
+                            Value = 3
+                        },
+                        new
+                        {
+                            LookupId = 13,
+                            Code = "ATLANTA",
+                            IsActive = true,
+                            LookupCategoryId = 5,
+                            Name = "Atlanta",
+                            ParentLookupId = 9,
+                            SortOrder = 10,
+                            Value = 4
                         });
                 });
 
@@ -652,15 +746,9 @@ namespace AngularWorkbench.Api.Data.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
-                    b.Property<int>("Value")
-                        .HasColumnType("int");
-
                     b.HasKey("LookupCategoryId");
 
                     b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.HasIndex("Value")
                         .IsUnique();
 
                     b.ToTable("LookupCategories");
@@ -671,16 +759,35 @@ namespace AngularWorkbench.Api.Data.Migrations
                             LookupCategoryId = 1,
                             Code = "ACCESS_SCOPE",
                             IsActive = true,
-                            Name = "Access Scope",
-                            Value = 1
+                            Name = "Access Scope"
                         },
                         new
                         {
                             LookupCategoryId = 2,
                             Code = "COMPANY_SCOPE",
                             IsActive = true,
-                            Name = "Company Scope",
-                            Value = 2
+                            Name = "Company Scope"
+                        },
+                        new
+                        {
+                            LookupCategoryId = 3,
+                            Code = "COUNTRY",
+                            IsActive = true,
+                            Name = "Country"
+                        },
+                        new
+                        {
+                            LookupCategoryId = 4,
+                            Code = "STATE",
+                            IsActive = true,
+                            Name = "State"
+                        },
+                        new
+                        {
+                            LookupCategoryId = 5,
+                            Code = "CITY",
+                            IsActive = true,
+                            Name = "City"
                         });
                 });
 
@@ -1782,9 +1889,19 @@ namespace AngularWorkbench.Api.Data.Migrations
                         .HasForeignKey("CityId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("AngularWorkbench.Api.Domain.Entities.Lookup", "CityLookup")
+                        .WithMany("CityAddresses")
+                        .HasForeignKey("CityLookupId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("AngularWorkbench.Api.Domain.Entities.Country", "Country")
                         .WithMany()
                         .HasForeignKey("CountryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("AngularWorkbench.Api.Domain.Entities.Lookup", "CountryLookup")
+                        .WithMany("CountryAddresses")
+                        .HasForeignKey("CountryLookupId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("AngularWorkbench.Api.Domain.Entities.State", "State")
@@ -1792,11 +1909,22 @@ namespace AngularWorkbench.Api.Data.Migrations
                         .HasForeignKey("StateId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("AngularWorkbench.Api.Domain.Entities.Lookup", "StateLookup")
+                        .WithMany("StateAddresses")
+                        .HasForeignKey("StateLookupId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("City");
+
+                    b.Navigation("CityLookup");
 
                     b.Navigation("Country");
 
+                    b.Navigation("CountryLookup");
+
                     b.Navigation("State");
+
+                    b.Navigation("StateLookup");
                 });
 
             modelBuilder.Entity("AngularWorkbench.Api.Domain.Entities.AppUser", b =>
@@ -2098,7 +2226,13 @@ namespace AngularWorkbench.Api.Data.Migrations
 
                     b.Navigation("Children");
 
+                    b.Navigation("CityAddresses");
+
                     b.Navigation("CompanyScopeRoles");
+
+                    b.Navigation("CountryAddresses");
+
+                    b.Navigation("StateAddresses");
                 });
 
             modelBuilder.Entity("AngularWorkbench.Api.Domain.Entities.LookupCategory", b =>

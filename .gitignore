@@ -1,3 +1,21 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.rsuser
+*.userosscache
+*.sln.docstates
+
+# .NET
+bin/
+obj/
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# VS Code
+
 node_modules/
 .angular/
 dist/

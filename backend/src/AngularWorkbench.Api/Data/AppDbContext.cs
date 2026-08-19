@@ -25,6 +25,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<ProductOptionGroup> ProductOptionGroups => Set<ProductOptionGroup>();
     public DbSet<ProductOption> ProductOptions => Set<ProductOption>();
     public DbSet<LineItemSelection> LineItemSelections => Set<LineItemSelection>();
+    public DbSet<Country> Countries { get; set; }
+    public DbSet<State> States { get; set; }
+    public DbSet<City> Cities { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -51,18 +54,79 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(address => address.AddressLine1).HasMaxLength(200);
             entity.Property(address => address.AddressLine2).HasMaxLength(200);
             entity.Property(address => address.PostalCode).HasMaxLength(20);
+     
+            // NEW geography relationships
             entity.HasOne(address => address.Country)
-                .WithMany(lookup => lookup.CountryAddresses)
-                .HasForeignKey(address => address.CountryLookupId)
+                .WithMany()
+                .HasForeignKey(address => address.CountryId)
                 .OnDelete(DeleteBehavior.Restrict);
+
             entity.HasOne(address => address.State)
-                .WithMany(lookup => lookup.StateAddresses)
-                .HasForeignKey(address => address.StateLookupId)
+                .WithMany()
+                .HasForeignKey(address => address.StateId)
                 .OnDelete(DeleteBehavior.Restrict);
+
             entity.HasOne(address => address.City)
-                .WithMany(lookup => lookup.CityAddresses)
-                .HasForeignKey(address => address.CityLookupId)
+                .WithMany()
+                .HasForeignKey(address => address.CityId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<Country>(entity =>
+        {
+            entity.HasKey(country => country.CountryId);
+
+            entity.Property(country => country.Name)
+                .IsRequired();
+
+            entity.Property(country => country.Code)
+                .IsRequired();
+
+            entity.HasIndex(country => country.Code)
+                .IsUnique();
+
+            entity.HasMany(country => country.States)
+                .WithOne(state => state.Country)
+                .HasForeignKey(state => state.CountryId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<State>(entity =>
+        {
+            entity.HasKey(state => state.StateId);
+
+            entity.Property(state => state.Name)
+                .IsRequired();
+
+            entity.Property(state => state.Code)
+                .IsRequired();
+
+            entity.HasIndex(state => new
+            {
+                state.CountryId,
+                state.Code
+            })
+            .IsUnique();
+
+            entity.HasMany(state => state.Cities)
+                .WithOne(city => city.State)
+                .HasForeignKey(city => city.StateId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<City>(entity =>
+        {
+            entity.HasKey(city => city.CityId);
+
+            entity.Property(city => city.Name)
+                .IsRequired();
+
+            entity.Property(city => city.Code)
+                .IsRequired();
+
+            entity.HasIndex(city => new
+            {
+                city.StateId,
+                city.Code
+            })
+            .IsUnique();
         });
 
         modelBuilder.Entity<AppUserRole>(entity =>
@@ -131,7 +195,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.HasKey(category => category.LookupCategoryId);
             entity.Property(category => category.Name).HasMaxLength(150).IsRequired();
             entity.Property(category => category.Code).HasMaxLength(80).IsRequired();
+            entity.Property(category => category.Value).IsRequired();
             entity.HasIndex(category => category.Code).IsUnique();
+            entity.HasIndex(category => category.Value).IsUnique();
+
         });
 
         modelBuilder.Entity<Lookup>(entity =>
@@ -150,6 +217,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.HasIndex(lookup => lookup.LookupCategoryId);
             entity.HasIndex(lookup => lookup.ParentLookupId);
             entity.HasIndex(lookup => new { lookup.LookupCategoryId, lookup.Code }).IsUnique();
+            entity.HasIndex(lookup => new { lookup.LookupCategoryId, lookup.Value }).IsUnique();
+
         });
 
         modelBuilder.Entity<Permission>(entity =>

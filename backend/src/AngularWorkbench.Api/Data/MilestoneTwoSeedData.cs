@@ -8,26 +8,24 @@ public static class MilestoneTwoSeedData
     public static void SeedMilestoneTwoData(this ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<LookupCategory>().HasData(
-            new LookupCategory { LookupCategoryId = 1, Name = "Access Scope", Code = "ACCESS_SCOPE", IsActive = true },
-            new LookupCategory { LookupCategoryId = 2, Name = "Company Scope", Code = "COMPANY_SCOPE", IsActive = true },
-            new LookupCategory { LookupCategoryId = 3, Name = "Country", Code = "COUNTRY", IsActive = true },
-            new LookupCategory { LookupCategoryId = 4, Name = "State", Code = "STATE", IsActive = true },
-            new LookupCategory { LookupCategoryId = 5, Name = "City", Code = "CITY", IsActive = true });
+            new LookupCategory { LookupCategoryId = 1, Name = "Access Scope", Code = "ACCESS_SCOPE", Value = 1, IsActive = true },
+            new LookupCategory { LookupCategoryId = 2, Name = "Company Scope", Code = "COMPANY_SCOPE", Value = 2, IsActive = true });
+
 
         modelBuilder.Entity<Lookup>().HasData(
-            new Lookup { LookupId = 1, LookupCategoryId = 1, Name = "Global", Code = "GLOBAL", SortOrder = 10, IsActive = true },
-            new Lookup { LookupId = 2, LookupCategoryId = 1, Name = "Company", Code = "COMPANY", SortOrder = 20, IsActive = true },
-            new Lookup { LookupId = 3, LookupCategoryId = 1, Name = "Region", Code = "REGION", SortOrder = 30, IsActive = true },
-            new Lookup { LookupId = 4, LookupCategoryId = 2, Name = "Internal", Code = "INTERNAL", SortOrder = 10, IsActive = true },
-            new Lookup { LookupId = 5, LookupCategoryId = 2, Name = "External", Code = "EXTERNAL", SortOrder = 20, IsActive = true },
-            new Lookup { LookupId = 6, LookupCategoryId = 2, Name = "Both", Code = "BOTH", SortOrder = 30, IsActive = true },
-            new Lookup { LookupId = 7, LookupCategoryId = 3, Name = "United States", Code = "US", SortOrder = 10, IsActive = true },
-            new Lookup { LookupId = 8, LookupCategoryId = 4, ParentLookupId = 7, Name = "Texas", Code = "TX", SortOrder = 10, IsActive = true },
-            new Lookup { LookupId = 9, LookupCategoryId = 4, ParentLookupId = 7, Name = "Georgia", Code = "GA", SortOrder = 20, IsActive = true },
-            new Lookup { LookupId = 10, LookupCategoryId = 5, ParentLookupId = 8, Name = "Dallas", Code = "DALLAS", SortOrder = 10, IsActive = true },
-            new Lookup { LookupId = 11, LookupCategoryId = 5, ParentLookupId = 8, Name = "Garland", Code = "GARLAND", SortOrder = 20, IsActive = true },
-            new Lookup { LookupId = 12, LookupCategoryId = 5, ParentLookupId = 8, Name = "Fort Worth", Code = "FORT_WORTH", SortOrder = 30, IsActive = true },
-            new Lookup { LookupId = 13, LookupCategoryId = 5, ParentLookupId = 9, Name = "Atlanta", Code = "ATLANTA", SortOrder = 10, IsActive = true });
+            new Lookup { LookupId = 1, LookupCategoryId = 1, Name = "Global", Code = "GLOBAL", Value = 1, SortOrder = 10, IsActive = true },
+            new Lookup { LookupId = 2, LookupCategoryId = 1, Name = "Company", Code = "COMPANY", Value = 2, SortOrder = 20, IsActive = true },
+            new Lookup { LookupId = 3, LookupCategoryId = 1, Name = "Region", Code = "REGION", Value = 3, SortOrder = 30, IsActive = true },
+            new Lookup { LookupId = 4, LookupCategoryId = 2, Name = "Internal", Code = "INTERNAL", Value = 1, SortOrder = 10, IsActive = true },
+            new Lookup { LookupId = 5, LookupCategoryId = 2, Name = "External", Code = "EXTERNAL", Value = 2, SortOrder = 20, IsActive = true },
+            new Lookup { LookupId = 6, LookupCategoryId = 2, Name = "Both", Code = "BOTH", Value = 3, SortOrder = 30, IsActive = true });
+            //new Lookup { LookupId = 7, LookupCategoryId = 3, Name = "United States", Code = "US", Value = 1, SortOrder = 10, IsActive = true },
+            //new Lookup { LookupId = 8, LookupCategoryId = 4, ParentLookupId = 7, Name = "Texas", Code = "TX", Value = 1, SortOrder = 10, IsActive = true },
+            //new Lookup { LookupId = 9, LookupCategoryId = 4, ParentLookupId = 7, Name = "Georgia", Code = "GA", Value = 2, SortOrder = 20, IsActive = true },
+            //new Lookup { LookupId = 10, LookupCategoryId = 5, ParentLookupId = 8, Name = "Dallas", Code = "DALLAS", Value = 1, SortOrder = 10, IsActive = true },
+            //new Lookup { LookupId = 11, LookupCategoryId = 5, ParentLookupId = 8, Name = "Garland", Code = "GARLAND", Value = 2, SortOrder = 20, IsActive = true },
+            //new Lookup { LookupId = 12, LookupCategoryId = 5, ParentLookupId = 8, Name = "Fort Worth", Code = "FORT_WORTH", Value = 3, SortOrder = 30, IsActive = true },
+            //new Lookup { LookupId = 13, LookupCategoryId = 5, ParentLookupId = 9, Name = "Atlanta", Code = "ATLANTA", Value = 4, SortOrder = 10, IsActive = true });
 
         modelBuilder.Entity<Region>().HasData(
             new Region { RegionId = 1, Name = "Southwest", Code = "SW", IsActive = true },
@@ -45,27 +43,27 @@ public static class MilestoneTwoSeedData
                 AddressId = 1,
                 AddressLine1 = "123 Example Rd",
                 PostalCode = "75001",
-                CountryLookupId = 7,
-                StateLookupId = 8,
-                CityLookupId = 10
+                CountryId = 1,
+                StateId = 1,
+                CityId = 1
             },
             new Address
             {
                 AddressId = 2,
                 AddressLine1 = "456 Peachtree St",
                 PostalCode = "30303",
-                CountryLookupId = 7,
-                StateLookupId = 9,
-                CityLookupId = 13
+                CountryId = 1,
+                StateId = 2,
+                CityId = 4
             },
             new Address
             {
                 AddressId = 3,
                 AddressLine1 = "789 Mechanical Way",
                 PostalCode = "76102",
-                CountryLookupId = 7,
-                StateLookupId = 8,
-                CityLookupId = 12
+                CountryId = 1,
+                StateId = 1,
+                CityId = 3
             });
 
         modelBuilder.Entity<Location>().HasData(

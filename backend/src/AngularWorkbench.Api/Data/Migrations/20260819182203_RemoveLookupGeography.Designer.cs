@@ -4,6 +4,7 @@ using AngularWorkbench.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AngularWorkbench.Api.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260819182203_RemoveLookupGeography")]
+    partial class RemoveLookupGeography
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -628,6 +631,82 @@ namespace AngularWorkbench.Api.Data.Migrations
                             Name = "Both",
                             SortOrder = 30,
                             Value = 3
+                        },
+                        new
+                        {
+                            LookupId = 7,
+                            Code = "US",
+                            IsActive = true,
+                            LookupCategoryId = 3,
+                            Name = "United States",
+                            SortOrder = 10,
+                            Value = 1
+                        },
+                        new
+                        {
+                            LookupId = 8,
+                            Code = "TX",
+                            IsActive = true,
+                            LookupCategoryId = 4,
+                            Name = "Texas",
+                            ParentLookupId = 7,
+                            SortOrder = 10,
+                            Value = 1
+                        },
+                        new
+                        {
+                            LookupId = 9,
+                            Code = "GA",
+                            IsActive = true,
+                            LookupCategoryId = 4,
+                            Name = "Georgia",
+                            ParentLookupId = 7,
+                            SortOrder = 20,
+                            Value = 2
+                        },
+                        new
+                        {
+                            LookupId = 10,
+                            Code = "DALLAS",
+                            IsActive = true,
+                            LookupCategoryId = 5,
+                            Name = "Dallas",
+                            ParentLookupId = 8,
+                            SortOrder = 10,
+                            Value = 1
+                        },
+                        new
+                        {
+                            LookupId = 11,
+                            Code = "GARLAND",
+                            IsActive = true,
+                            LookupCategoryId = 5,
+                            Name = "Garland",
+                            ParentLookupId = 8,
+                            SortOrder = 20,
+                            Value = 2
+                        },
+                        new
+                        {
+                            LookupId = 12,
+                            Code = "FORT_WORTH",
+                            IsActive = true,
+                            LookupCategoryId = 5,
+                            Name = "Fort Worth",
+                            ParentLookupId = 8,
+                            SortOrder = 30,
+                            Value = 3
+                        },
+                        new
+                        {
+                            LookupId = 13,
+                            Code = "ATLANTA",
+                            IsActive = true,
+                            LookupCategoryId = 5,
+                            Name = "Atlanta",
+                            ParentLookupId = 9,
+                            SortOrder = 10,
+                            Value = 4
                         });
                 });
 
@@ -652,15 +731,9 @@ namespace AngularWorkbench.Api.Data.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
-                    b.Property<int>("Value")
-                        .HasColumnType("int");
-
                     b.HasKey("LookupCategoryId");
 
                     b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.HasIndex("Value")
                         .IsUnique();
 
                     b.ToTable("LookupCategories");
@@ -671,16 +744,35 @@ namespace AngularWorkbench.Api.Data.Migrations
                             LookupCategoryId = 1,
                             Code = "ACCESS_SCOPE",
                             IsActive = true,
-                            Name = "Access Scope",
-                            Value = 1
+                            Name = "Access Scope"
                         },
                         new
                         {
                             LookupCategoryId = 2,
                             Code = "COMPANY_SCOPE",
                             IsActive = true,
-                            Name = "Company Scope",
-                            Value = 2
+                            Name = "Company Scope"
+                        },
+                        new
+                        {
+                            LookupCategoryId = 3,
+                            Code = "COUNTRY",
+                            IsActive = true,
+                            Name = "Country"
+                        },
+                        new
+                        {
+                            LookupCategoryId = 4,
+                            Code = "STATE",
+                            IsActive = true,
+                            Name = "State"
+                        },
+                        new
+                        {
+                            LookupCategoryId = 5,
+                            Code = "CITY",
+                            IsActive = true,
+                            Name = "City"
                         });
                 });
 
