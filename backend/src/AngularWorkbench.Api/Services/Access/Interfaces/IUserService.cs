@@ -1,36 +1,43 @@
 ﻿using AngularWorkbench.Api.Domain.Entities;
+using AngularWorkbench.Api.Models.DTOS.Access;
+using AngularWorkbench.Api.Models.DTOS.Requests;
 
 namespace AngularWorkbench.Api.Services.Access.Interfaces
 {
 
     public interface IUserService
     {
-        Task<AppUser?> GetByIdAsync(
-            int appUserId,
+        Task<AppUserDto?> GetByIdAsync(
+            int userId,
             CancellationToken cancellationToken = default);
 
-        Task<AppUser?> GetByEmailAsync(
+        Task<AppUserDetailsDto?> GetDetailsAsync(
+            int userId,
+            CancellationToken cancellationToken = default);
+
+        Task<AppUserDto?> GetByEmailAsync(
             string email,
             CancellationToken cancellationToken = default);
 
-        Task<IReadOnlyList<AppUser>> GetByCompanyIdAsync(
+        Task<IReadOnlyList<AppUserDto>> GetByCompanyIdAsync(
             int companyId,
             CancellationToken cancellationToken = default);
 
-        Task<IReadOnlyList<AppUser>> GetByLocationIdAsync(
+        Task<IReadOnlyList<AppUserDto>> GetByLocationIdAsync(
             int locationId,
             CancellationToken cancellationToken = default);
 
-        Task<AppUser> CreateAsync(
-            AppUser user,
+        Task<AppUserDto> CreateAsync(
+            AppUserRequest request,
             CancellationToken cancellationToken = default);
 
-        Task UpdateAsync(
-            AppUser user,
+        Task<bool> UpdateAsync(
+            int userId,
+            AppUserRequest request,
             CancellationToken cancellationToken = default);
 
-        Task DeactivateAsync(
-            int appUserId,
+        Task<bool> DeactivateAsync(
+            int userId,
             CancellationToken cancellationToken = default);
     }
 }

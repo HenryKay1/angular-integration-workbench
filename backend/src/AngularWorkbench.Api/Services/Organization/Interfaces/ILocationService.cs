@@ -1,34 +1,32 @@
-﻿using AngularWorkbench.Api.Domain.Entities;
+﻿using AngularWorkbench.Api.Models.DTOS.Organization;
+using AngularWorkbench.Api.Models.DTOS.Requests;
 
 namespace AngularWorkbench.Api.Services.Organization.Interfaces
 {
-
     public interface ILocationService
     {
-        Task<Location?> GetByIdAsync(
+        Task<LocationDto?> GetByIdAsync(
             int locationId,
             CancellationToken cancellationToken = default);
 
-        Task<IReadOnlyList<Location>> GetByCompanyIdAsync(
+        Task<IReadOnlyList<LocationDto>> GetByCompanyIdAsync(
             int companyId,
             CancellationToken cancellationToken = default);
-        Task<Location?> GetWithAddressAsync(
-        int locationId,
-        CancellationToken cancellationToken = default);
 
-        Task<Address?> GetAddressAsync(
+        Task<LocationDetailsDto?> GetDetailsAsync(
             int locationId,
             CancellationToken cancellationToken = default);
 
-        Task<Location> CreateAsync(
-            Location location,
+        Task<LocationDto> CreateAsync(
+            LocationRequest request,
             CancellationToken cancellationToken = default);
 
-        Task UpdateAsync(
-            Location location,
+        Task<bool> UpdateAsync(
+            int locationId,
+            LocationRequest request,
             CancellationToken cancellationToken = default);
 
-        Task DeleteAsync(
+        Task<bool> DeleteAsync(
             int locationId,
             CancellationToken cancellationToken = default);
     }

@@ -17,9 +17,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Controllers\Catalog\" />
+    <Folder Include="Controllers\Reference\" />
+    <Folder Include="Controllers\Product\" />
     <Folder Include="Repositories\Projects\" />
     <Folder Include="Services\Catalog\Interfaces\" />
     <Folder Include="Services\Product\Interfaces\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Models\DTOS\Access\AppUserRoleDto.cs" />
   </ItemGroup>
 
 </Project>

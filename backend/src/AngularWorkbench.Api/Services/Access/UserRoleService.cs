@@ -1,83 +1,314 @@
-﻿using Microsoft.EntityFrameworkCore;
-using AngularWorkbench.Api.Domain.Entities;
-using AngularWorkbench.Api.Repositories.Specifications;
+﻿using AngularWorkbench.Api.Domain.Entities;
+using AngularWorkbench.Api.Models.DTOS.Access;
+using AngularWorkbench.Api.Models.DTOS.Requests;
+using AngularWorkbench.Api.Models.Entities.Reference.Enums;
 using AngularWorkbench.Api.Repositories.Access.Interfaces;
 using AngularWorkbench.Api.Repositories.Interfaces;
+using AngularWorkbench.Api.Repositories.Reference.Interfaces;
+using AngularWorkbench.Api.Repositories.Specifications;
 using AngularWorkbench.Api.Services.Access.Interfaces;
 
-namespace AngularWorkbench.Api.Services.Access
+namespace AngularWorkbench.Api.Services.Access;
+
+public sealed class UserRoleService : IUserRoleService
 {
-    public sealed class UserRoleService
-    : IUserRoleService
+    private readonly IUserRoleRepository _userRoleRepository;
+    private readonly ILookupRepository _lookupRepository;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public UserRoleService(
+        IUserRoleRepository userRoleRepository,
+        ILookupRepository lookupRepository,
+        IUnitOfWork unitOfWork)
     {
-        private readonly IUserRoleRepository _userRoleRepository;
-        private readonly IUnitOfWork _unitOfWork;
+        _userRoleRepository = userRoleRepository;
+        _lookupRepository = lookupRepository;
+        _unitOfWork = unitOfWork;
+    }
 
-        public UserRoleService(
-            IUserRoleRepository userRoleRepository,
-            IUnitOfWork unitOfWork)
+    public async Task<AppUserRoleDto?> GetByIdAsync(
+        int appUserRoleId,
+        CancellationToken cancellationToken = default)
+    {
+        var specification =
+            new QueryProjectionSpecification<AppUserRole, AppUserRoleDto>()
+                .Where(x => x.AppUserRoleId == appUserRoleId)
+                .Select(x => new AppUserRoleDto
+                {
+                    AppUserRoleId = x.AppUserRoleId,
+                    AppUserId = x.AppUserId,
+
+                    RoleId = x.RoleId,
+                    RoleName = x.Role.Name,
+
+                    AccessScopeValue = x.AccessScope.Value,
+                    AccessScopeName = x.AccessScope.Name,
+
+                    CompanyId = x.CompanyId,
+                    CompanyName = x.Company != null
+                        ? x.Company.Name
+                        : null,
+
+                    RegionId = x.RegionId,
+                    RegionName = x.Region != null
+                        ? x.Region.Name
+                        : null
+                });
+
+        return await _userRoleRepository.FirstOrDefaultAsync(
+            specification,
+            cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<AppUserRoleDto>> GetByUserIdAsync(
+        int userId,
+        CancellationToken cancellationToken = default)
+    {
+        var specification =
+            new QueryProjectionSpecification<AppUserRole, AppUserRoleDto>()
+                .Where(x => x.AppUserId == userId)
+                .Select(x => new AppUserRoleDto
+                {
+                    AppUserRoleId = x.AppUserRoleId,
+                    AppUserId = x.AppUserId,
+
+                    RoleId = x.RoleId,
+                    RoleName = x.Role.Name,
+
+                    AccessScopeValue = x.AccessScope.Value,
+                    AccessScopeName = x.AccessScope.Name,
+
+                    CompanyId = x.CompanyId,
+                    CompanyName = x.Company != null
+                        ? x.Company.Name
+                        : null,
+
+                    RegionId = x.RegionId,
+                    RegionName = x.Region != null
+                        ? x.Region.Name
+                        : null
+                });
+
+        return await _userRoleRepository.ListAsync(
+            specification,
+            cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<AppUserRoleDto>> GetByRoleIdAsync(
+        int roleId,
+        CancellationToken cancellationToken = default)
+    {
+        var specification =
+            new QueryProjectionSpecification<AppUserRole, AppUserRoleDto>()
+                .Where(x => x.RoleId == roleId)
+                .Select(x => new AppUserRoleDto
+                {
+                    AppUserRoleId = x.AppUserRoleId,
+                    AppUserId = x.AppUserId,
+
+                    RoleId = x.RoleId,
+                    RoleName = x.Role.Name,
+
+                    AccessScopeValue = x.AccessScope.Value,
+                    AccessScopeName = x.AccessScope.Name,
+
+                    CompanyId = x.CompanyId,
+                    CompanyName = x.Company != null
+                        ? x.Company.Name
+                        : null,
+
+                    RegionId = x.RegionId,
+                    RegionName = x.Region != null
+                        ? x.Region.Name
+                        : null
+                });
+
+        return await _userRoleRepository.ListAsync(
+            specification,
+            cancellationToken);
+    }
+    public async Task<AppUserRoleDto> AssignAsync(
+    AppUserRoleRequest request,
+    CancellationToken cancellationToken = default)
+    {
+        var accessScope =
+            await _lookupRepository.GetByValueAsync(
+                LookupCategoryEnum.AccessScope,
+                request.AccessScopeValue,
+                cancellationToken);
+
+        if (accessScope is null)
         {
-            _userRoleRepository = userRoleRepository;
-            _unitOfWork = unitOfWork;
+            throw new InvalidOperationException(
+                $"Access scope value {request.AccessScopeValue} does not exist.");
         }
 
-        public Task<AppUserRole?> GetByIdAsync(
-            int appUserRoleId,
-            CancellationToken cancellationToken = default)
+        ValidateScope(
+            request.AccessScopeValue,
+            request.CompanyId,
+            request.RegionId);
+
+        var userRole = new AppUserRole
         {
-            return _userRoleRepository.GetByIdAsync(
-                appUserRoleId,
+            AppUserId = request.AppUserId,
+            RoleId = request.RoleId,
+
+            AccessScopeLookupId =
+                accessScope.LookupId,
+
+            CompanyId = request.CompanyId,
+            RegionId = request.RegionId
+        };
+
+        await _userRoleRepository.AddAsync(
+            userRole,
+            cancellationToken);
+
+        await _unitOfWork.SaveChangesAsync(
+            cancellationToken);
+
+        return new AppUserRoleDto
+        {
+            AppUserRoleId = userRole.AppUserRoleId,
+            AppUserId = userRole.AppUserId,
+
+            RoleId = userRole.RoleId,
+
+            AccessScopeValue = accessScope.Value,
+            AccessScopeName = accessScope.Name,
+
+            CompanyId = userRole.CompanyId,
+            RegionId = userRole.RegionId
+        };
+    }
+    public async Task<bool> UpdateAsync(
+    int appUserRoleId,
+    AppUserRoleRequest request,
+    CancellationToken cancellationToken = default)
+    {
+        var specification =
+            new QuerySpecification<AppUserRole>()
+                .Where(x =>
+                    x.AppUserRoleId == appUserRoleId)
+                .WithTracking();
+
+        var userRole =
+            await _userRoleRepository.FirstOrDefaultAsync(
+                specification,
                 cancellationToken);
+
+        if (userRole is null)
+        {
+            return false;
         }
 
-        public Task<IReadOnlyList<AppUserRole>> GetByUserIdAsync(
-            int appUserId,
-            CancellationToken cancellationToken = default)
-        {
-            return _userRoleRepository.GetByUserIdAsync(
-                appUserId,
+        var accessScope =
+            await _lookupRepository.GetByValueAsync(
+                LookupCategoryEnum.AccessScope,
+                request.AccessScopeValue,
                 cancellationToken);
+
+        if (accessScope is null)
+        {
+            throw new InvalidOperationException(
+                $"Access scope value {request.AccessScopeValue} does not exist.");
         }
 
-        public Task<IReadOnlyList<AppUserRole>> GetByRoleIdAsync(
-            int roleId,
-            CancellationToken cancellationToken = default)
-        {
-            return _userRoleRepository.GetByRoleIdAsync(
-                roleId,
+        ValidateScope(
+            request.AccessScopeValue,
+            request.CompanyId,
+            request.RegionId);
+
+        userRole.AppUserId = request.AppUserId;
+        userRole.RoleId = request.RoleId;
+
+        userRole.AccessScopeLookupId =
+            accessScope.LookupId;
+
+        userRole.CompanyId = request.CompanyId;
+        userRole.RegionId = request.RegionId;
+
+        await _unitOfWork.SaveChangesAsync(
+            cancellationToken);
+
+        return true;
+    }
+    public async Task<bool> RemoveAsync(
+        int appUserRoleId,
+        CancellationToken cancellationToken = default)
+    {
+        var specification =
+            new QuerySpecification<AppUserRole>()
+                .Where(x =>
+                    x.AppUserRoleId == appUserRoleId)
+                .WithTracking();
+
+        var userRole =
+            await _userRoleRepository.FirstOrDefaultAsync(
+                specification,
                 cancellationToken);
+
+        if (userRole is null)
+        {
+            return false;
         }
 
-        public async Task<AppUserRole> AssignAsync(
-            AppUserRole assignment,
-            CancellationToken cancellationToken = default)
+        _userRoleRepository.Delete(userRole);
+
+        await _unitOfWork.SaveChangesAsync(
+            cancellationToken);
+
+        return true;
+    }
+    private static void ValidateScope(
+        int accessScopeValue,
+        int? companyId,
+        int? regionId)
+    {
+        var accessScope =
+            (AccessScope)accessScopeValue;
+
+        switch (accessScope)
         {
-            await _userRoleRepository.AddAsync(
-                assignment,
-                cancellationToken);
+            case AccessScope.Global:
 
-            await _unitOfWork.SaveChangesAsync(
-                cancellationToken);
+                if (companyId.HasValue || regionId.HasValue)
+                {
+                    throw new InvalidOperationException(
+                        "Global access cannot specify a company or region.");
+                }
 
-            return assignment;
-        }
+                break;
 
-        public async Task RemoveAsync(
-            int appUserRoleId,
-            CancellationToken cancellationToken = default)
-        {
-            var assignment =
-                await _userRoleRepository.GetByIdAsync(
-                    appUserRoleId,
-                    cancellationToken);
+            case AccessScope.Company:
 
-            if (assignment is null)
-                return;
+                if (!companyId.HasValue)
+                {
+                    throw new InvalidOperationException(
+                        "Company access requires a CompanyId.");
+                }
 
-            _userRoleRepository.Delete(assignment);
+                if (regionId.HasValue)
+                {
+                    throw new InvalidOperationException(
+                        "Company access cannot specify a RegionId.");
+                }
 
-            await _unitOfWork.SaveChangesAsync(
-                cancellationToken);
+                break;
+
+            case AccessScope.Region:
+
+                if (!regionId.HasValue)
+                {
+                    throw new InvalidOperationException(
+                        "Region access requires a RegionId.");
+                }
+
+                break;
+
+            default:
+                throw new InvalidOperationException(
+                    $"Unsupported access scope value {accessScopeValue}.");
         }
     }
 }

@@ -1,5 +1,7 @@
 ﻿using AngularWorkbench.Api.Data;
 using AngularWorkbench.Api.Domain.Entities;
+using AngularWorkbench.Api.Models.DTOS.Access;
+using AngularWorkbench.Api.Models.DTOS.Requests;
 using AngularWorkbench.Api.Repositories.Access.Interfaces;
 using AngularWorkbench.Api.Repositories.Interfaces;
 using AngularWorkbench.Api.Repositories.Specifications;
@@ -8,8 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AngularWorkbench.Api.Services.Access
 {
-    public sealed class PermissionService
-        : IPermissionService
+    public sealed class PermissionService : IPermissionService
     {
         private readonly IPermissionRepository _permissionRepository;
         private readonly IUnitOfWork _unitOfWork;
@@ -22,35 +23,75 @@ namespace AngularWorkbench.Api.Services.Access
             _unitOfWork = unitOfWork;
         }
 
-        public Task<Permission?> GetByIdAsync(
+        public async Task<PermissionDto?> GetByIdAsync(
             int permissionId,
             CancellationToken cancellationToken = default)
         {
-            return _permissionRepository.GetByIdAsync(
-                permissionId,
+            var specification =
+                new QueryProjectionSpecification<Permission, PermissionDto>()
+                    .Where(x => x.PermissionId == permissionId)
+                    .Select(x => new PermissionDto
+                    {
+                        PermissionId = x.PermissionId,
+                        Code = x.Code,
+                        Name = x.Name,
+                        Description = x.Description
+                    });
+
+            return await _permissionRepository.FirstOrDefaultAsync(
+                specification,
                 cancellationToken);
         }
 
-        public Task<Permission?> GetByCodeAsync(
+        public async Task<PermissionDto?> GetByCodeAsync(
             string code,
             CancellationToken cancellationToken = default)
         {
-            return _permissionRepository.GetByCodeAsync(
-                code,
+            var specification =
+                new QueryProjectionSpecification<Permission, PermissionDto>()
+                    .Where(x => x.Code == code)
+                    .Select(x => new PermissionDto
+                    {
+                        PermissionId = x.PermissionId,
+                        Code = x.Code,
+                        Name = x.Name,
+                        Description = x.Description
+                    });
+
+            return await _permissionRepository.FirstOrDefaultAsync(
+                specification,
                 cancellationToken);
         }
 
-        public Task<IReadOnlyList<Permission>> GetAllAsync(
+        public async Task<IReadOnlyList<PermissionDto>> GetAllAsync(
             CancellationToken cancellationToken = default)
         {
-            return _permissionRepository.GetAllAsync(
+            var specification =
+                new QueryProjectionSpecification<Permission, PermissionDto>()
+                    .Select(x => new PermissionDto
+                    {
+                        PermissionId = x.PermissionId,
+                        Code = x.Code,
+                        Name = x.Name,
+                        Description = x.Description
+                    });
+
+            return await _permissionRepository.ListAsync(
+                specification,
                 cancellationToken);
         }
 
-        public async Task<Permission> CreateAsync(
-            Permission permission,
+        public async Task<PermissionDto> CreateAsync(
+            PermissionRequest request,
             CancellationToken cancellationToken = default)
         {
+            var permission = new Permission
+            {
+                Code = request.Code,
+                Name = request.Name,
+                Description = request.Description
+            };
+
             await _permissionRepository.AddAsync(
                 permission,
                 cancellationToken);
@@ -58,17 +99,49 @@ namespace AngularWorkbench.Api.Services.Access
             await _unitOfWork.SaveChangesAsync(
                 cancellationToken);
 
-            return permission;
+            return MapToDto(permission);
         }
 
-        public async Task UpdateAsync(
-            Permission permission,
+        public async Task<bool> UpdateAsync(
+            int permissionId,
+            PermissionRequest request,
             CancellationToken cancellationToken = default)
         {
-            _permissionRepository.Update(permission);
+            var specification =
+                new QuerySpecification<Permission>()
+                    .Where(x => x.PermissionId == permissionId)
+                    .WithTracking();
+
+            var permission =
+                await _permissionRepository.FirstOrDefaultAsync(
+                    specification,
+                    cancellationToken);
+
+            if (permission is null)
+            {
+                return false;
+            }
+
+            permission.Code = request.Code;
+            permission.Name = request.Name;
+            permission.Description = request.Description;
 
             await _unitOfWork.SaveChangesAsync(
                 cancellationToken);
+
+            return true;
+        }
+
+        private static PermissionDto MapToDto(
+            Permission permission)
+        {
+            return new PermissionDto
+            {
+                PermissionId = permission.PermissionId,
+                Code = permission.Code,
+                Name = permission.Name,
+                Description = permission.Description
+            };
         }
     }
 }

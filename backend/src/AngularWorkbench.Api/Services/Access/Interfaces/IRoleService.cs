@@ -1,30 +1,37 @@
 ﻿using AngularWorkbench.Api.Domain.Entities;
+using AngularWorkbench.Api.Models.DTOS.Access;
+using AngularWorkbench.Api.Models.DTOS.Requests;
 
 namespace AngularWorkbench.Api.Services.Access.Interfaces
 {
 
     public interface IRoleService
     {
-        Task<Role?> GetByIdAsync(
+        Task<RoleDto?> GetByIdAsync(
             int roleId,
             CancellationToken cancellationToken = default);
 
-        Task<Role?> GetByNameAsync(
+        Task<RoleDetailsDto?> GetDetailsAsync(
+            int roleId,
+            CancellationToken cancellationToken = default);
+
+        Task<RoleDto?> GetByNameAsync(
             string name,
             CancellationToken cancellationToken = default);
 
-        Task<IReadOnlyList<Role>> GetActiveAsync(
+        Task<IReadOnlyList<RoleDto>> GetActiveAsync(
             CancellationToken cancellationToken = default);
 
-        Task<Role> CreateAsync(
-            Role role,
+        Task<RoleDto> CreateAsync(
+            RoleRequest request,
             CancellationToken cancellationToken = default);
 
-        Task UpdateAsync(
-            Role role,
+        Task<bool> UpdateAsync(
+            int roleId,
+            RoleRequest request,
             CancellationToken cancellationToken = default);
 
-        Task DeactivateAsync(
+        Task<bool> DeactivateAsync(
             int roleId,
             CancellationToken cancellationToken = default);
     }

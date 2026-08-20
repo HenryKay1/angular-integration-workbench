@@ -13,7 +13,7 @@ namespace AngularWorkbench.Api.Repositories.Specifications
             private set;
         } = default!;
 
-        protected void Select(
+        protected void SetSelector(
             Expression<Func<TEntity, TResult>> selector)
         {
             Selector = selector;

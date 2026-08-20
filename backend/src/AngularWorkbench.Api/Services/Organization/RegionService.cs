@@ -1,8 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using AngularWorkbench.Api.Domain.Entities;
-using AngularWorkbench.Api.Repositories.Specifications;
-using AngularWorkbench.Api.Repositories.Organization.Interfaces;
+﻿using AngularWorkbench.Api.Domain.Entities;
+using AngularWorkbench.Api.Models.DTOS.Access;
+using AngularWorkbench.Api.Models.DTOS.Requests;
 using AngularWorkbench.Api.Repositories.Interfaces;
+using AngularWorkbench.Api.Repositories.Organization.Interfaces;
+using AngularWorkbench.Api.Repositories.Specifications;
 using AngularWorkbench.Api.Services.Organization.Interfaces;
 
 namespace AngularWorkbench.Api.Services.Organization
@@ -20,35 +21,79 @@ namespace AngularWorkbench.Api.Services.Organization
             _unitOfWork = unitOfWork;
         }
 
-        public Task<Region?> GetByIdAsync(
+        public async Task<RegionDto?> GetByIdAsync(
             int regionId,
             CancellationToken cancellationToken = default)
         {
-            return _regionRepository.GetByIdAsync(
-                regionId,
-                cancellationToken);
+            var specification =
+                new QueryProjectionSpecification<Region, RegionDto>()
+                    .Where(x => x.RegionId == regionId)
+                    .Select(x => new RegionDto
+                    {
+                        RegionId = x.RegionId,
+                        Name = x.Name,
+                        Code = x.Code,
+                        IsActive = x.IsActive
+                    });
+
+            return await _regionRepository
+                .FirstOrDefaultAsync(
+                    specification,
+                    cancellationToken);
         }
 
-        public Task<Region?> GetByCodeAsync(
+        public async Task<RegionDto?> GetByCodeAsync(
             string code,
             CancellationToken cancellationToken = default)
         {
-            return _regionRepository.GetByCodeAsync(
-                code,
-                cancellationToken);
+            var specification =
+                new QueryProjectionSpecification<Region, RegionDto>()
+                    .Where(x => x.Code == code)
+                    .Select(x => new RegionDto
+                    {
+                        RegionId = x.RegionId,
+                        Name = x.Name,
+                        Code = x.Code,
+                        IsActive = x.IsActive
+                    });
+
+            return await _regionRepository
+                .FirstOrDefaultAsync(
+                    specification,
+                    cancellationToken);
         }
 
-        public Task<IReadOnlyList<Region>> GetActiveAsync(
+        public async Task<IReadOnlyList<RegionDto>> GetActiveAsync(
             CancellationToken cancellationToken = default)
         {
-            return _regionRepository.GetActiveAsync(
-                cancellationToken);
+            var specification =
+                new QueryProjectionSpecification<Region, RegionDto>()
+                    .Where(x => x.IsActive)
+                    .Select(x => new RegionDto
+                    {
+                        RegionId = x.RegionId,
+                        Name = x.Name,
+                        Code = x.Code,
+                        IsActive = x.IsActive
+                    });
+
+            return await _regionRepository
+                .ListAsync(
+                    specification,
+                    cancellationToken);
         }
 
-        public async Task<Region> CreateAsync(
-            Region region,
+        public async Task<RegionDto> CreateAsync(
+            RegionRequest request,
             CancellationToken cancellationToken = default)
         {
+            var region = new Region
+            {
+                Name = request.Name,
+                Code = request.Code,
+                IsActive = request.IsActive
+            };
+
             await _regionRepository.AddAsync(
                 region,
                 cancellationToken);
@@ -56,36 +101,76 @@ namespace AngularWorkbench.Api.Services.Organization
             await _unitOfWork.SaveChangesAsync(
                 cancellationToken);
 
-            return region;
+            return MapToDto(region);
         }
 
-        public async Task UpdateAsync(
-            Region region,
+        public async Task<bool> UpdateAsync(
+            int regionId,
+            RegionRequest request,
             CancellationToken cancellationToken = default)
         {
-            _regionRepository.Update(region);
+            var specification =
+                new QuerySpecification<Region>()
+                    .Where(x => x.RegionId == regionId)
+                    .WithTracking();
+
+            var region =
+                await _regionRepository.FirstOrDefaultAsync(
+                    specification,
+                    cancellationToken);
+
+            if (region is null)
+            {
+                return false;
+            }
+
+            region.Name = request.Name;
+            region.Code = request.Code;
+            region.IsActive = request.IsActive;
 
             await _unitOfWork.SaveChangesAsync(
                 cancellationToken);
+
+            return true;
         }
 
-        public async Task DeactivateAsync(
+        public async Task<bool> DeactivateAsync(
             int regionId,
             CancellationToken cancellationToken = default)
         {
-            var region = await _regionRepository.GetByIdAsync(
-                regionId,
-                cancellationToken);
+            var specification =
+                new QuerySpecification<Region>()
+                    .Where(x => x.RegionId == regionId)
+                    .WithTracking();
+
+            var region =
+                await _regionRepository.FirstOrDefaultAsync(
+                    specification,
+                    cancellationToken);
 
             if (region is null)
-                return;
+            {
+                return false;
+            }
 
             region.IsActive = false;
 
-            _regionRepository.Update(region);
-
             await _unitOfWork.SaveChangesAsync(
                 cancellationToken);
+
+            return true;
+        }
+
+        private static RegionDto MapToDto(
+            Region region)
+        {
+            return new RegionDto
+            {
+                RegionId = region.RegionId,
+                Name = region.Name,
+                Code = region.Code,
+                IsActive = region.IsActive
+            };
         }
     }
 }

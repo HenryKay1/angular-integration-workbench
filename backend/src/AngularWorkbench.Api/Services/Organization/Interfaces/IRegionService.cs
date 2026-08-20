@@ -1,29 +1,32 @@
-﻿using AngularWorkbench.Api.Domain.Entities;
+﻿
+using AngularWorkbench.Api.Models.DTOS.Access;
+using AngularWorkbench.Api.Models.DTOS.Requests;
 
 namespace AngularWorkbench.Api.Services.Organization.Interfaces
 {
     public interface IRegionService
     {
-        Task<Region?> GetByIdAsync(
+        Task<RegionDto?> GetByIdAsync(
             int regionId,
             CancellationToken cancellationToken = default);
 
-        Task<Region?> GetByCodeAsync(
+        Task<RegionDto?> GetByCodeAsync(
             string code,
             CancellationToken cancellationToken = default);
 
-        Task<IReadOnlyList<Region>> GetActiveAsync(
+        Task<IReadOnlyList<RegionDto>> GetActiveAsync(
             CancellationToken cancellationToken = default);
 
-        Task<Region> CreateAsync(
-            Region region,
+        Task<RegionDto> CreateAsync(
+            RegionRequest request,
             CancellationToken cancellationToken = default);
 
-        Task UpdateAsync(
-            Region region,
+        Task<bool> UpdateAsync(
+            int regionId,
+            RegionRequest request,
             CancellationToken cancellationToken = default);
 
-        Task DeactivateAsync(
+        Task<bool> DeactivateAsync(
             int regionId,
             CancellationToken cancellationToken = default);
     }
