@@ -1,3 +1,73 @@
+import { Observable } from 'rxjs';
+import { FormGroup } from '@angular/forms';
+
+export interface ValidationContext {
+  form: FormGroup;
+  values: Record<string, unknown>;
+}
+
+export interface BaseValidatorConfig {
+  validator: string;
+  message?: string;
+  dependsOn?: string[];
+  when?: (context: ValidationContext) => boolean;
+}
+
+export interface ValidatorConfig extends BaseValidatorConfig {
+  value?: unknown;
+}
+
+export interface AsyncValidationResult {
+  isValid: boolean;
+  message?: string | null;
+}
+
+export interface AsyncValidatorConfig extends BaseValidatorConfig {
+  debounceMs?: number;
+  validate?: (
+    value: unknown,
+    context: ValidationContext
+  ) => Observable<AsyncValidationResult>;
+}
+
+export interface FormFieldRuntimeApi {
+  hide(fieldKey: string): void;
+  show(fieldKey: string): void;
+  isHidden(fieldKey: string): boolean;
+  disable(fieldKey: string): void;
+  enable(fieldKey: string): void;
+  isDisabled(fieldKey: string): boolean;
+  setReadonly(fieldKey: string, readonly: boolean): void;
+  isReadonly(fieldKey: string): boolean;
+  clear(fieldKey: string): void;
+  setValue(fieldKey: string, value: unknown): void;
+  reset(fieldKey: string): void;
+  setOptions(fieldKey: string, options: DropdownOption[]): void;
+  update(fieldKey: string, properties: RuntimeFieldUpdate): void;
+}
+
+export interface FormRuleContext {
+  form: FormGroup;
+  values: Record<string, unknown>;
+  fields: FormFieldRuntimeApi;
+}
+
+export interface FormStateRule {
+  dependsOn: string[];
+  execute: (context: FormRuleContext) => void;
+}
+
+export type RuntimeFieldUpdate = Partial<
+  Omit<BaseFieldConfig, 'key' | 'type'>
+> &
+  Record<string, unknown>;
+
+export interface RuntimeFieldState {
+  hidden: boolean;
+  readonly: boolean;
+  overrides: RuntimeFieldUpdate;
+}
+
 export interface BaseFieldConfig {
   key: string;
   label: string;
@@ -9,6 +79,8 @@ export interface BaseFieldConfig {
   colSpan?: number;
   align?: 'left' | 'center' | 'right';
   section?: string;
+  validators?: ValidatorConfig[];
+  asyncValidators?: AsyncValidatorConfig[];
 }
 
 export interface TextFieldConfig extends BaseFieldConfig {
@@ -51,6 +123,9 @@ export interface DropdownFieldConfig extends BaseFieldConfig {
   options: DropdownOption[];
   searchable?: boolean;
   allowOther?: boolean;
+  multiSelect?: boolean;
+  clearable?: boolean;
+  clearLabel?: string;
   placeholder?: string;
 }
 
@@ -132,6 +207,7 @@ export interface FormConfig {
   requireSubmitConfirmation?: boolean;
   submitConfirmationTitle?: string;
   submitConfirmationMessage?: string;
+  stateRules?: FormStateRule[];
 }
 
 export interface DropdownSelection {
@@ -140,6 +216,8 @@ export interface DropdownSelection {
   isOther?: boolean;
   otherValue?: string;
 }
+
+export type DropdownValue = DropdownSelection | DropdownSelection[] | null;
 
 export interface UploadedFileItem {
   id: string;

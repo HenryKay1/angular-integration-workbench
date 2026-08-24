@@ -1,3 +1,5 @@
+@import '@angular/material/prebuilt-themes/azure-blue.css';
+
 :root {
   color-scheme: light;
   font-family: Arial, sans-serif;
@@ -11,4 +13,30 @@ body {
 
 a {
   color: inherit;
+}
+
+.aiw-toast {
+  --mdc-snackbar-container-shape: 6px;
+  --mdc-snackbar-supporting-text-color: #ffffff;
+  --mat-snack-bar-button-color: #ffffff;
+}
+
+.aiw-toast--success {
+  --mdc-snackbar-container-color: #176b3a;
+}
+
+.aiw-toast--error {
+  --mdc-snackbar-container-color: #a11b1b;
+}
+
+.aiw-toast--warning {
+  --mdc-snackbar-container-color: #8a5a00;
+}
+
+.aiw-toast--info {
+  --mdc-snackbar-container-color: #1d4f91;
+}
+
+.aiw-loading-host {
+  isolation: isolate;
 }

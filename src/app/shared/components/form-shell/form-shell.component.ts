@@ -5,6 +5,7 @@ import {
   ElementRef,
   EventEmitter,
   Input,
+  inject,
   OnDestroy,
   OnChanges,
   Output,
@@ -12,31 +13,28 @@ import {
   SimpleChanges,
   ViewChildren
 } from '@angular/core';
-import {
-  AbstractControl,
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  ValidationErrors,
-  ValidatorFn,
-  Validators
-} from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
+import { AsyncValidatorRegistry } from '../../validation/async-validator-registry.service';
+import { ValidatorRegistry } from '../../validation/validator-registry.service';
 import { DropdownFieldComponent } from '../dropdown-field/dropdown-field.component';
 import { FileUploadFieldComponent } from '../file-upload-field/file-upload-field.component';
 import { ImageCropFieldComponent } from '../image-crop-field/image-crop-field.component';
 import { ImageHeaderFieldComponent } from '../image-header-field/image-header-field.component';
 import {
+  DropdownOption,
   DropdownSelection,
+  DropdownValue,
+  FormFieldRuntimeApi,
+  FormRuleContext,
   FormConfig,
   FormFieldConfig,
-  ImageCropValue,
   ImageHeaderFieldConfig,
   FormSectionConfig,
   FormSubmissionValue,
-  ImageHeaderValue,
-  UploadedFileItem
+  RuntimeFieldState,
+  RuntimeFieldUpdate,
+  ValidationContext
 } from './form-config.model';
 
 interface ResolvedFormSection extends FormSectionConfig {
@@ -67,7 +65,9 @@ export class FormShellComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Output() submitForm = new EventEmitter<FormSubmissionValue>();
   @Output() cancelForm = new EventEmitter<void>();
 
-  private readonly formBuilder = new FormBuilder();
+  private readonly formBuilder = inject(FormBuilder);
+  private readonly validatorRegistry = inject(ValidatorRegistry);
+  private readonly asyncValidatorRegistry = inject(AsyncValidatorRegistry);
   private readonly gridResizeObserver =
     typeof ResizeObserver !== 'undefined'
       ? new ResizeObserver((entries) => {
@@ -75,6 +75,12 @@ export class FormShellComponent implements AfterViewInit, OnChanges, OnDestroy {
         })
       : null;
   private gridChangesSubscription?: Subscription;
+  private dependencySubscriptions: Subscription[] = [];
+  private ruleSubscriptions: Subscription[] = [];
+  private runtimeFieldStates: Record<string, RuntimeFieldState> = {};
+  private initialValueSnapshot: FormSubmissionValue = {};
+  private queuedRuleIndexes = new Set<number>();
+  private readonly maxRuleIterations = 50;
 
   protected form: FormGroup = this.formBuilder.group({});
   protected collapsedSections: Record<string, boolean> = {};
@@ -113,8 +119,8 @@ export class FormShellComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   protected get visibleFields(): FormFieldConfig[] {
-    return (this.config.fields ?? []).filter(
-      (field) => !field.hidden && field.type !== 'image-header'
+    return this.getEffectiveFields().filter(
+      (field) => !this.isFieldHidden(field.key) && field.type !== 'image-header'
     );
   }
 
@@ -135,10 +141,10 @@ export class FormShellComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   protected get topImageHeaderField(): ImageHeaderFieldConfig | null {
-    const fields = this.getAllFields();
+    const fields = this.getEffectiveFields();
     const imageHeaderField = fields.find(
       (field): field is ImageHeaderFieldConfig =>
-        !field.hidden && field.type === 'image-header'
+        !this.isFieldHidden(field.key) && field.type === 'image-header'
     );
 
     return imageHeaderField ?? null;
@@ -159,10 +165,20 @@ export class FormShellComponent implements AfterViewInit, OnChanges, OnDestroy {
   ngOnDestroy(): void {
     this.gridResizeObserver?.disconnect();
     this.gridChangesSubscription?.unsubscribe();
+    this.clearDependencySubscriptions();
+    this.clearRuleSubscriptions();
+  }
+
+  reset(value: FormSubmissionValue = this.initialValue): void {
+    this.initialValue = value;
+    this.rebuildForm();
+    this.form.markAsPristine();
+    this.form.markAsUntouched();
+    queueMicrotask(() => this.observeFormGrids());
   }
 
   protected getVisibleSectionFields(section: ResolvedFormSection): FormFieldConfig[] {
-    return section.fields.filter((field) => !field.hidden && field.type !== 'image-header');
+    return section.fields.filter((field) => !this.isFieldHidden(field.key) && field.type !== 'image-header');
   }
 
   protected isSectionCollapsed(sectionKey: string): boolean {
@@ -196,6 +212,16 @@ export class FormShellComponent implements AfterViewInit, OnChanges, OnDestroy {
     return typeof value === 'object' ? JSON.stringify(value) : String(value);
   }
 
+  protected isReadonlyField(fieldKey: string): boolean {
+    return this.runtimeFieldStates[fieldKey]?.readonly ?? false;
+  }
+
+  protected handleReadonlyClick(event: MouseEvent, fieldKey: string): void {
+    if (this.isReadonlyField(fieldKey)) {
+      event.preventDefault();
+    }
+  }
+
   protected handleSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -226,38 +252,20 @@ export class FormShellComponent implements AfterViewInit, OnChanges, OnDestroy {
       return null;
     }
 
-    if (control.errors['required']) {
-      if (field.type === 'dropdown') {
-        return `Please choose a ${field.label.toLowerCase()}.`;
-      }
+    const firstErrorKey = Object.keys(control.errors)[0];
+    const validatorConfig = [
+      ...(field.validators ?? []),
+      ...(field.asyncValidators ?? [])
+    ].find((config) => this.getValidatorErrorKey(config.validator) === firstErrorKey);
 
-      if (field.type === 'image-header') {
-        return `Please add an image.`;
-      }
-
-      if (field.type === 'image-crop') {
-        return `Please add an image.`;
-      }
-
-      if (field.type === 'file-upload') {
-        return `Please add ${field.multiple ? 'at least one file' : 'a file'}.`;
-      }
-
-      return `${field.label} is required.`;
-    }
-
-    if (field.type === 'number' && control.errors['min']) {
-      return `${field.label} must be at least ${field.min}.`;
-    }
-
-    if (field.type === 'number' && control.errors['max']) {
-      return `${field.label} must be at most ${field.max}.`;
-    }
-
-    return 'Please review this field.';
+    return validatorConfig?.message ?? 'Please review this field.';
   }
 
   private rebuildForm(): void {
+    this.clearDependencySubscriptions();
+    this.clearRuleSubscriptions();
+    this.queuedRuleIndexes.clear();
+
     const controls = this.getAllFields().reduce<Record<string, FormControl>>(
       (accumulator, field) => {
         accumulator[field.key] = this.createControl(field);
@@ -267,6 +275,8 @@ export class FormShellComponent implements AfterViewInit, OnChanges, OnDestroy {
     );
 
     this.form = this.formBuilder.group(controls);
+    this.initialValueSnapshot = this.form.getRawValue();
+    this.initializeRuntimeFieldStates();
     this.collapsedSections = Object.fromEntries(
       this.resolveSectionsFromFields().map((section) => [
         section.key,
@@ -274,45 +284,41 @@ export class FormShellComponent implements AfterViewInit, OnChanges, OnDestroy {
       ])
     );
     this.isConfirmationOpen = false;
+    this.registerValidationDependencies();
+    this.registerStateRuleDependencies();
+    this.queueAllStateRules();
+    this.flushStateRuleQueue();
   }
 
   private createControl(field: FormFieldConfig): FormControl {
     const initialValue = this.initialValue[field.key] ?? this.getDefaultValue(field);
-    const validators = [];
-
-    if (field.required) {
-      if (field.type === 'dropdown') {
-        validators.push(this.createDropdownRequiredValidator());
-      } else if (field.type === 'image-crop') {
-        validators.push(this.createImageCropRequiredValidator());
-      } else if (field.type === 'image-header') {
-        validators.push(this.createImageHeaderRequiredValidator());
-      } else if (field.type === 'file-upload') {
-        validators.push(this.createFileUploadRequiredValidator());
-      } else if (field.type !== 'checkbox') {
-        validators.push(Validators.required);
-      }
-    }
-
-    if (field.type === 'number') {
-      if (field.min !== undefined) {
-        validators.push(Validators.min(field.min));
-      }
-
-      if (field.max !== undefined) {
-        validators.push(Validators.max(field.max));
-      }
-    }
+    const validators = this.validatorRegistry.resolveAll(
+      field,
+      field.validators ?? [],
+      () => this.createValidationContext()
+    );
+    const asyncValidators = this.asyncValidatorRegistry.resolveAll(
+      field,
+      field.asyncValidators ?? [],
+      () => this.createValidationContext()
+    );
 
     return this.formBuilder.control(
       { value: initialValue, disabled: !!field.disabled },
-      validators
+      {
+        validators,
+        asyncValidators
+      }
     );
   }
 
   private getDefaultValue(field: FormFieldConfig): unknown {
     if (field.type === 'checkbox') {
       return false;
+    }
+
+    if (field.type === 'dropdown' && field.multiSelect) {
+      return [];
     }
 
     if (
@@ -331,6 +337,223 @@ export class FormShellComponent implements AfterViewInit, OnChanges, OnDestroy {
     return this.config.fields ?? [];
   }
 
+  private getEffectiveFields(): FormFieldConfig[] {
+    return this.getAllFields().map((field) => this.getEffectiveField(field));
+  }
+
+  private getEffectiveField(field: FormFieldConfig): FormFieldConfig {
+    const state = this.runtimeFieldStates[field.key];
+
+    if (!state) {
+      return field;
+    }
+
+    return {
+      ...field,
+      ...state.overrides,
+      key: field.key,
+      type: field.type
+    } as FormFieldConfig;
+  }
+
+  private getBaseField(fieldKey: string): FormFieldConfig {
+    const field = this.getAllFields().find((item) => item.key === fieldKey);
+
+    if (!field) {
+      throw new Error(`Unknown form field "${fieldKey}".`);
+    }
+
+    return field;
+  }
+
+  private initializeRuntimeFieldStates(): void {
+    this.runtimeFieldStates = Object.fromEntries(
+      this.getAllFields().map((field) => [
+        field.key,
+        {
+          hidden: !!field.hidden,
+          readonly: false,
+          overrides: {}
+        } satisfies RuntimeFieldState
+      ])
+    );
+  }
+
+  private isFieldHidden(fieldKey: string): boolean {
+    return this.runtimeFieldStates[fieldKey]?.hidden ?? false;
+  }
+
+  private createRuntimeFieldApi(): FormFieldRuntimeApi {
+    return {
+      hide: (fieldKey) => this.setFieldHidden(fieldKey, true),
+      show: (fieldKey) => this.setFieldHidden(fieldKey, false),
+      isHidden: (fieldKey) => this.isFieldHidden(fieldKey),
+      disable: (fieldKey) => this.setControlDisabled(fieldKey, true),
+      enable: (fieldKey) => this.setControlDisabled(fieldKey, false),
+      isDisabled: (fieldKey) => this.getControl(fieldKey).disabled,
+      setReadonly: (fieldKey, readonly) => this.setFieldReadonly(fieldKey, readonly),
+      isReadonly: (fieldKey) => this.runtimeFieldStates[fieldKey]?.readonly ?? false,
+      clear: (fieldKey) => this.setRuntimeValue(fieldKey, this.getDefaultValue(this.getBaseField(fieldKey))),
+      setValue: (fieldKey, value) => this.setRuntimeValue(fieldKey, value),
+      reset: (fieldKey) => this.setRuntimeValue(fieldKey, this.initialValueSnapshot[fieldKey]),
+      setOptions: (fieldKey, options) => this.setRuntimeOptions(fieldKey, options),
+      update: (fieldKey, properties) => this.updateRuntimeField(fieldKey, properties)
+    };
+  }
+
+  private getControl(fieldKey: string): FormControl {
+    const control = this.form.get(fieldKey);
+
+    if (!control) {
+      throw new Error(`Unknown form control "${fieldKey}".`);
+    }
+
+    return control as FormControl;
+  }
+
+  private setFieldHidden(fieldKey: string, hidden: boolean): void {
+    const state = this.getRuntimeFieldState(fieldKey);
+
+    if (state.hidden === hidden) {
+      return;
+    }
+
+    this.runtimeFieldStates = {
+      ...this.runtimeFieldStates,
+      [fieldKey]: {
+        ...state,
+        hidden
+      }
+    };
+
+    queueMicrotask(() => this.observeFormGrids());
+  }
+
+  private setControlDisabled(fieldKey: string, disabled: boolean): void {
+    const control = this.getControl(fieldKey);
+
+    if (control.disabled === disabled) {
+      return;
+    }
+
+    if (disabled) {
+      control.disable({ emitEvent: false });
+    } else {
+      control.enable({ emitEvent: false });
+    }
+
+    control.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private setFieldReadonly(fieldKey: string, readonly: boolean): void {
+    const state = this.getRuntimeFieldState(fieldKey);
+
+    if (state.readonly === readonly) {
+      return;
+    }
+
+    this.runtimeFieldStates = {
+      ...this.runtimeFieldStates,
+      [fieldKey]: {
+        ...state,
+        readonly
+      }
+    };
+  }
+
+  private setRuntimeValue(fieldKey: string, value: unknown): void {
+    const control = this.getControl(fieldKey);
+
+    if (this.areValuesEqual(control.value, value)) {
+      return;
+    }
+
+    control.setValue(value, { emitEvent: false });
+    control.updateValueAndValidity({ emitEvent: false });
+    this.queueStateRulesForDependency(fieldKey);
+  }
+
+  private setRuntimeOptions(fieldKey: string, options: DropdownOption[]): void {
+    const field = this.getBaseField(fieldKey);
+
+    if (field.type !== 'dropdown') {
+      throw new Error(`Runtime options can only be set for dropdown field "${fieldKey}".`);
+    }
+
+    this.updateRuntimeField(fieldKey, {
+      options
+    });
+    this.reconcileDropdownValue(fieldKey, options);
+  }
+
+  private updateRuntimeField(fieldKey: string, properties: RuntimeFieldUpdate): void {
+    const state = this.getRuntimeFieldState(fieldKey);
+    const { key: _key, type: _type, ...allowedProperties } = properties;
+    const nextOverrides = {
+      ...state.overrides,
+      ...allowedProperties
+    };
+
+    if (this.areValuesEqual(state.overrides, nextOverrides)) {
+      return;
+    }
+
+    this.runtimeFieldStates = {
+      ...this.runtimeFieldStates,
+      [fieldKey]: {
+        ...state,
+        overrides: nextOverrides
+      }
+    };
+  }
+
+  private getRuntimeFieldState(fieldKey: string): RuntimeFieldState {
+    this.getBaseField(fieldKey);
+
+    const state = this.runtimeFieldStates[fieldKey];
+
+    if (!state) {
+      throw new Error(`Runtime state missing for field "${fieldKey}".`);
+    }
+
+    return state;
+  }
+
+  private reconcileDropdownValue(fieldKey: string, options: DropdownOption[]): void {
+    const field = this.getBaseField(fieldKey);
+    const control = this.getControl(fieldKey);
+    const validValues = new Set(options.map((option) => option.value));
+    const currentValue = control.value as DropdownValue;
+
+    if (field.type !== 'dropdown') {
+      return;
+    }
+
+    if (Array.isArray(currentValue)) {
+      const nextValue = currentValue.filter(
+        (selection) => selection.isOther || validValues.has(selection.selectedKey ?? '')
+      );
+
+      if (!this.areValuesEqual(currentValue, nextValue)) {
+        this.setRuntimeValue(fieldKey, nextValue);
+      }
+
+      return;
+    }
+
+    if (
+      currentValue &&
+      !currentValue.isOther &&
+      !validValues.has(currentValue.selectedKey ?? '')
+    ) {
+      this.setRuntimeValue(fieldKey, this.getDefaultValue(field));
+    }
+  }
+
+  private areValuesEqual(first: unknown, second: unknown): boolean {
+    return JSON.stringify(first) === JSON.stringify(second);
+  }
+
   private resolveSectionsFromFields(): ResolvedFormSection[] {
     const sections = new Map<string, ResolvedFormSection>();
 
@@ -341,7 +564,7 @@ export class FormShellComponent implements AfterViewInit, OnChanges, OnDestroy {
       });
     });
 
-    this.getAllFields().forEach((field) => {
+    this.getEffectiveFields().forEach((field) => {
       const fieldSection = this.resolveFieldSection(field);
 
       if (!fieldSection) {
@@ -390,70 +613,157 @@ export class FormShellComponent implements AfterViewInit, OnChanges, OnDestroy {
       .replace(/\b\w/g, (character) => character.toUpperCase());
   }
 
-  private createDropdownRequiredValidator(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const value = control.value as DropdownSelection | null;
-
-      if (!value) {
-        return { required: true };
-      }
-
-      if (value.isOther) {
-        return value.otherValue?.trim() ? null : { required: true };
-      }
-
-      return value.selectedKey !== undefined && value.selectedKey !== null && value.selectedKey !== ''
-        ? null
-        : { required: true };
-    };
-  }
-
-  private createImageHeaderRequiredValidator(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const value = control.value as ImageHeaderValue[] | ImageHeaderValue | null;
-
-      if (!value) {
-        return { required: true };
-      }
-
-      if (Array.isArray(value)) {
-        return value.length > 0 ? null : { required: true };
-      }
-
-      return value.file || value.sourceUrl || value.previewUrl ? null : { required: true };
-    };
-  }
-
-  private createImageCropRequiredValidator(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const value = control.value as ImageCropValue | null;
-
-      if (!value) {
-        return { required: true };
-      }
-
-      return value.file || value.sourceUrl || value.previewUrl ? null : { required: true };
-    };
-  }
-
-  private createFileUploadRequiredValidator(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const value = control.value as UploadedFileItem[] | UploadedFileItem | null;
-
-      if (!value) {
-        return { required: true };
-      }
-
-      if (Array.isArray(value)) {
-        return value.length > 0 ? null : { required: true };
-      }
-
-      return value.file || value.sourceUrl || value.previewUrl ? null : { required: true };
-    };
-  }
-
   private emitSubmission(): void {
     this.submitForm.emit(this.form.getRawValue());
+  }
+
+  private createValidationContext(): ValidationContext {
+    return {
+      form: this.form,
+      values: this.form.getRawValue()
+    };
+  }
+
+  private registerValidationDependencies(): void {
+    const registeredPairs = new Set<string>();
+
+    this.getAllFields().forEach((field) => {
+      const targetControl = this.form.get(field.key);
+
+      if (!targetControl) {
+        return;
+      }
+
+      const dependencies = [
+        ...(field.validators ?? []),
+        ...(field.asyncValidators ?? [])
+      ].flatMap((config) => config.dependsOn ?? []);
+
+      new Set(dependencies).forEach((dependencyKey) => {
+        const pairKey = `${dependencyKey}->${field.key}`;
+
+        if (registeredPairs.has(pairKey)) {
+          return;
+        }
+
+        const dependencyControl = this.form.get(dependencyKey);
+
+        if (!dependencyControl) {
+          return;
+        }
+
+        registeredPairs.add(pairKey);
+        this.dependencySubscriptions.push(
+          dependencyControl.valueChanges.subscribe(() => {
+            targetControl.updateValueAndValidity({
+              emitEvent: false
+            });
+          })
+        );
+      });
+    });
+  }
+
+  private clearDependencySubscriptions(): void {
+    this.dependencySubscriptions.forEach((subscription) =>
+      subscription.unsubscribe()
+    );
+    this.dependencySubscriptions = [];
+  }
+
+  private registerStateRuleDependencies(): void {
+    const registeredPairs = new Set<string>();
+
+    (this.config.stateRules ?? []).forEach((rule, ruleIndex) => {
+      rule.dependsOn.forEach((dependencyKey) => {
+        const pairKey = `${dependencyKey}->${ruleIndex}`;
+
+        if (registeredPairs.has(pairKey)) {
+          return;
+        }
+
+        const dependencyControl = this.form.get(dependencyKey);
+
+        if (!dependencyControl) {
+          throw new Error(
+            `State rule ${ruleIndex} depends on unknown field "${dependencyKey}".`
+          );
+        }
+
+        registeredPairs.add(pairKey);
+        this.ruleSubscriptions.push(
+          dependencyControl.valueChanges.subscribe(() => {
+            this.queueStateRulesForDependency(dependencyKey);
+            this.flushStateRuleQueue();
+          })
+        );
+      });
+    });
+  }
+
+  private clearRuleSubscriptions(): void {
+    this.ruleSubscriptions.forEach((subscription) => subscription.unsubscribe());
+    this.ruleSubscriptions = [];
+  }
+
+  private queueAllStateRules(): void {
+    (this.config.stateRules ?? []).forEach((_, index) =>
+      this.queuedRuleIndexes.add(index)
+    );
+  }
+
+  private queueStateRulesForDependency(fieldKey: string): void {
+    (this.config.stateRules ?? []).forEach((rule, index) => {
+      if (rule.dependsOn.includes(fieldKey)) {
+        this.queuedRuleIndexes.add(index);
+      }
+    });
+  }
+
+  private flushStateRuleQueue(): void {
+    let iterations = 0;
+
+    while (this.queuedRuleIndexes.size > 0) {
+      if (iterations >= this.maxRuleIterations) {
+        console.warn(
+          `Form state rule evaluation stopped after ${this.maxRuleIterations} iterations. Check for cyclic rules.`
+        );
+        this.queuedRuleIndexes.clear();
+        return;
+      }
+
+      const ruleIndexes = Array.from(this.queuedRuleIndexes).sort(
+        (left, right) => left - right
+      );
+      this.queuedRuleIndexes.clear();
+
+      ruleIndexes.forEach((ruleIndex) => {
+        const rule = this.config.stateRules?.[ruleIndex];
+
+        if (!rule) {
+          return;
+        }
+
+        rule.execute(this.createFormRuleContext());
+      });
+
+      iterations += 1;
+    }
+  }
+
+  private createFormRuleContext(): FormRuleContext {
+    return {
+      form: this.form,
+      values: this.form.getRawValue(),
+      fields: this.createRuntimeFieldApi()
+    };
+  }
+
+  private getValidatorErrorKey(validatorName: string): string {
+    return (
+      this.validatorRegistry.getErrorKey(validatorName) ||
+      this.asyncValidatorRegistry.getErrorKey(validatorName)
+    );
   }
 
   private observeFormGrids(): void {

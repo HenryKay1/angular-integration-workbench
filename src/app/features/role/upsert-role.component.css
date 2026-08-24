@@ -1,0 +1,70 @@
+.role-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.role-page__header,
+.role-page__panel {
+  padding: 1.25rem;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.06);
+}
+
+.role-page__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.role-page__eyebrow,
+.role-page__header h2,
+.role-page__intro,
+.role-page__status,
+.role-page__message {
+  margin: 0;
+}
+
+.role-page__eyebrow {
+  margin-bottom: 0.5rem;
+  color: #0f766e;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.role-page__intro,
+.role-page__status {
+  color: #52606d;
+}
+
+.role-page__link {
+  min-height: 2.35rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  color: #0f172a;
+}
+
+.role-page__message--error {
+  color: #b42318;
+}
+
+.role-page__message {
+  padding: 0.75rem 0.85rem;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+@media (max-width: 640px) {
+  .role-page__header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

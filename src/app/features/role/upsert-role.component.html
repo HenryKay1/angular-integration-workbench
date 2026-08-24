@@ -1,0 +1,34 @@
+<section class="role-page">
+  <header class="role-page__header">
+    <div>
+      <p class="role-page__eyebrow">Administration</p>
+      <h2>{{ isEditMode ? 'Edit role' : 'Create role' }}</h2>
+      <p class="role-page__intro">
+        Manage role scope, activation, and API-backed permission assignments.
+      </p>
+    </div>
+
+    <a class="role-page__link" routerLink="/">Dashboard</a>
+  </header>
+
+  <section
+    class="role-page__panel"
+    appLoading
+    [loading]="isLoading || isSaving"
+    [loadingConfig]="loadingConfig">
+    <!-- <p *ngIf="isLoading" class="role-page__status">Loading role setup...</p> -->
+
+    <aiw-form-shell
+      *ngIf="!isLoading"
+      [config]="formConfig"
+      [initialValue]="initialValue"
+      [submitLabel]="isSaving ? 'Saving...' : isEditMode ? 'Update role' : 'Create role'"
+      (submitForm)="submitRole($event)"
+      (cancelForm)="cancel()"
+    />
+
+    <!-- <p *ngIf="errorMessage" class="role-page__message role-page__message--error">
+      {{ errorMessage }}
+    </p> -->
+  </section>
+</section>

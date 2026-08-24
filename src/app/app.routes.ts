@@ -43,6 +43,22 @@ export const routes: Routes = [
       )
   },
   {
+    path: 'roles/new',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/role/upsert-role.component').then(
+        (module) => module.UpsertRoleComponent
+      )
+  },
+  {
+    path: 'roles/:roleId',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/role/upsert-role.component').then(
+        (module) => module.UpsertRoleComponent
+      )
+  },
+  {
     path: '**',
     redirectTo: ''
   }

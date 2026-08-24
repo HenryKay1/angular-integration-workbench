@@ -138,6 +138,48 @@ namespace AngularWorkbench.Api.Services.Access
                 specification,
                 cancellationToken);
         }
+
+        public async Task<bool> RoleNameIsUniqueAsync(
+            string name,
+            int? roleId = null,
+            CancellationToken cancellationToken = default)
+        {
+            var normalizedName = name.Trim().ToLowerInvariant();
+
+            if (normalizedName.Length == 0)
+            {
+                return true;
+            }
+
+            var specification =
+                new QuerySpecification<Role>()
+                    .Where(role =>
+                        role.Name.ToLower() == normalizedName &&
+                        (!roleId.HasValue || role.RoleId != roleId.Value));
+
+            var matchingRoles = await _roleRepository.CountAsync(
+                specification,
+                cancellationToken);
+
+            return matchingRoles == 0;
+        }
+
+        public async Task<ValidationResultDto> ValidateRoleNameAsync(
+            RoleNameValidationRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            var isUnique = await RoleNameIsUniqueAsync(
+                request.Name,
+                request.RoleId,
+                cancellationToken);
+
+            return new ValidationResultDto
+            {
+                IsValid = isUnique,
+                Message = isUnique ? null : "Role name must be unique."
+            };
+        }
+
         public async Task<RoleDto> CreateAsync(
     RoleRequest request,
     CancellationToken cancellationToken = default)

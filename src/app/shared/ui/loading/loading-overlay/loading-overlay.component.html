@@ -1,0 +1,23 @@
+<div
+  class="loading-overlay"
+  [class.loading-overlay--passthrough]="resolvedConfig.blockInteraction === false"
+  [style.--loading-overlay-opacity]="resolvedConfig.opacity">
+  <div class="loading-overlay__panel" role="status" aria-live="polite">
+    @if (resolvedConfig.indicator === 'logo') {
+      <img
+        class="loading-overlay__logo"
+        [class.loading-overlay__logo--spin-2d]="resolvedConfig.logoAnimation === 'spin2d'"
+        [class.loading-overlay__logo--spin-3d]="resolvedConfig.logoAnimation === 'spin3d'"
+        [src]="resolvedConfig.logoSrc"
+        alt="" />
+    } @else {
+      <mat-progress-spinner
+        diameter="44"
+        mode="indeterminate" />
+    }
+
+    @if (resolvedConfig.message) {
+      <span class="loading-overlay__message">{{ resolvedConfig.message }}</span>
+    }
+  </div>
+</div>

@@ -103,6 +103,7 @@
                 type="text"
                 [formControlName]="field.key"
                 [placeholder]="field.placeholder ?? ''"
+                [readonly]="isReadonlyField(field.key)"
                 [title]="getFieldValueTooltip(field.key)"
               />
             </label>
@@ -113,6 +114,7 @@
                 [formControlName]="field.key"
                 [rows]="field.rows ?? 4"
                 [placeholder]="field.placeholder ?? ''"
+                [readonly]="isReadonlyField(field.key)"
                 [title]="getFieldValueTooltip(field.key)"
               ></textarea>
             </label>
@@ -126,6 +128,7 @@
                 [attr.max]="field.max ?? null"
                 [attr.step]="field.step ?? null"
                 [placeholder]="field.placeholder ?? ''"
+                [readonly]="isReadonlyField(field.key)"
                 [title]="getFieldValueTooltip(field.key)"
               />
             </label>
@@ -137,6 +140,7 @@
                 [formControlName]="field.key"
                 [attr.min]="field.min ?? null"
                 [attr.max]="field.max ?? null"
+                [readonly]="isReadonlyField(field.key)"
                 [title]="getFieldValueTooltip(field.key)"
               />
             </label>
@@ -145,12 +149,22 @@
               <span class="form-shell__label" [title]="field.label">{{ field.label }}</span>
 
               <span *ngIf="field.controlStyle === 'checkbox'; else toggleCheckbox" class="form-shell__native-checkbox">
-                <input type="checkbox" [formControlName]="field.key" />
+                <input
+                  type="checkbox"
+                  [formControlName]="field.key"
+                  [attr.aria-readonly]="isReadonlyField(field.key)"
+                  (click)="handleReadonlyClick($event, field.key)"
+                />
               </span>
 
               <ng-template #toggleCheckbox>
                 <span class="form-shell__toggle">
-                  <input type="checkbox" [formControlName]="field.key" />
+                  <input
+                    type="checkbox"
+                    [formControlName]="field.key"
+                    [attr.aria-readonly]="isReadonlyField(field.key)"
+                    (click)="handleReadonlyClick($event, field.key)"
+                  />
                   <span class="form-shell__toggle-track" aria-hidden="true">
                     <span class="form-shell__toggle-thumb"></span>
                   </span>
@@ -165,6 +179,10 @@
                 [options]="field.options"
                 [searchable]="field.searchable ?? false"
                 [allowOther]="field.allowOther ?? false"
+                [multiSelect]="field.multiSelect ?? false"
+                [clearable]="field.clearable ?? null"
+                [clearLabel]="field.clearLabel ?? null"
+                [readonly]="isReadonlyField(field.key)"
                 [placeholder]="field.placeholder ?? 'Select an option'"
               />
             </label>

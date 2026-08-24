@@ -10,6 +10,21 @@
         [title]="triggerLabel"
       >
         <span class="dropdown-field__trigger-text">{{ triggerLabel }}</span>
+        <span
+          *ngIf="showClearOption && hasSelection"
+          role="button"
+          tabindex="0"
+          class="dropdown-field__clear"
+          [title]="resolvedClearLabel"
+          [attr.aria-label]="resolvedClearLabel"
+          (click)="handleClearClick($event)"
+          (keydown.enter)="handleClearClick($any($event))"
+          (keydown.space)="handleClearClick($any($event))"
+        >
+          <svg viewBox="0 0 20 20" focusable="false" aria-hidden="true">
+            <path d="M6 6 14 14M14 6 6 14" />
+          </svg>
+        </span>
         <span class="dropdown-field__trigger-icon" aria-hidden="true">
           <svg viewBox="0 0 20 20" focusable="false">
             <path d="M5.25 7.5 10 12.25 14.75 7.5" />
@@ -33,10 +48,15 @@
               *ngFor="let option of filteredOptions"
               type="button"
               class="dropdown-field__option"
-              [class.dropdown-field__option--active]="selection?.selectedKey === option.value && !selection?.isOther"
+              [class.dropdown-field__option--active]="isOptionSelected(option)"
               (click)="selectOption(option)"
               [title]="option.label"
             >
+              <span *ngIf="multiSelect" class="dropdown-field__check" aria-hidden="true">
+                <svg *ngIf="isOptionSelected(option)" viewBox="0 0 20 20" focusable="false">
+                  <path d="M5 10.5 8.5 14 15 6" />
+                </svg>
+              </span>
               <span class="dropdown-field__option-text">{{ option.label }}</span>
             </button>
 

@@ -22,6 +22,15 @@ namespace AngularWorkbench.Api.Services.Access.Interfaces
         Task<IReadOnlyList<RoleDto>> GetActiveAsync(
             CancellationToken cancellationToken = default);
 
+        Task<bool> RoleNameIsUniqueAsync(
+            string name,
+            int? roleId = null,
+            CancellationToken cancellationToken = default);
+
+        Task<ValidationResultDto> ValidateRoleNameAsync(
+            RoleNameValidationRequest request,
+            CancellationToken cancellationToken = default);
+
         Task<RoleDto> CreateAsync(
             RoleRequest request,
             CancellationToken cancellationToken = default);

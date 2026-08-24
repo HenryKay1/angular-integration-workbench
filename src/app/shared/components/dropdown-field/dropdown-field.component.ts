@@ -13,6 +13,7 @@ import {
   NG_VALUE_ACCESSOR
 } from '@angular/forms';
 import {
+  DropdownValue,
   DropdownOption,
   DropdownSelection
 } from '../form-shell/form-config.model';
@@ -36,15 +37,19 @@ export class DropdownFieldComponent implements ControlValueAccessor {
   @Input() placeholder = 'Select an option';
   @Input() searchable = false;
   @Input() allowOther = false;
+  @Input() multiSelect = false;
+  @Input() readonly = false;
+  @Input() clearable: boolean | null = null;
+  @Input() clearLabel: string | null = null;
 
-  protected selection: DropdownSelection | null = null;
+  protected selection: DropdownValue = null;
   protected searchTerm = '';
   protected otherDraft = '';
   protected isOpen = false;
   protected disabled = false;
 
   private readonly elementRef = inject(ElementRef<HTMLElement>);
-  private onChange: (value: DropdownSelection | null) => void = () => undefined;
+  private onChange: (value: DropdownValue) => void = () => undefined;
   private onTouched: () => void = () => undefined;
 
   protected get filteredOptions(): DropdownOption[] {
@@ -60,6 +65,10 @@ export class DropdownFieldComponent implements ControlValueAccessor {
   }
 
   protected get hasSelection(): boolean {
+    if (Array.isArray(this.selection)) {
+      return this.selection.length > 0;
+    }
+
     if (!this.selection) {
       return false;
     }
@@ -76,6 +85,16 @@ export class DropdownFieldComponent implements ControlValueAccessor {
       return this.placeholder;
     }
 
+    if (Array.isArray(this.selection)) {
+      const labels = this.selection.map((item) => this.getSelectionLabel(item));
+
+      if (labels.length <= 2) {
+        return labels.join(', ');
+      }
+
+      return `${labels.slice(0, 2).join(', ')} +${labels.length - 2} more`;
+    }
+
     if (this.selection?.isOther) {
       return this.selection.otherValue?.trim() || this.placeholder;
     }
@@ -84,17 +103,35 @@ export class DropdownFieldComponent implements ControlValueAccessor {
   }
 
   protected get otherPlaceholder(): string {
+    if (Array.isArray(this.selection)) {
+      const otherSelection = this.selection.find((item) => item.isOther);
+      return otherSelection?.otherValue?.trim() || 'Or enter another value';
+    }
+
     return this.selection?.isOther
       ? this.selection.otherValue?.trim() || 'Or enter another value'
       : 'Or enter another value';
   }
 
-  writeValue(value: DropdownSelection | null): void {
-    this.selection = value;
+  protected get showClearOption(): boolean {
+    return !this.multiSelect && (this.clearable ?? true);
+  }
+
+  protected get resolvedClearLabel(): string {
+    return this.clearLabel?.trim() || this.placeholder;
+  }
+
+  writeValue(value: DropdownValue): void {
+    if (this.multiSelect) {
+      this.selection = Array.isArray(value) ? value : value ? [value] : [];
+    } else {
+      this.selection = Array.isArray(value) ? value[0] ?? null : value;
+    }
+
     this.otherDraft = '';
   }
 
-  registerOnChange(fn: (value: DropdownSelection | null) => void): void {
+  registerOnChange(fn: (value: DropdownValue) => void): void {
     this.onChange = fn;
   }
 
@@ -114,7 +151,7 @@ export class DropdownFieldComponent implements ControlValueAccessor {
   }
 
   protected toggleOpen(): void {
-    if (this.disabled) {
+    if (this.disabled || this.readonly) {
       return;
     }
 
@@ -134,21 +171,61 @@ export class DropdownFieldComponent implements ControlValueAccessor {
 
     this.searchTerm = '';
     this.otherDraft = '';
+
+    if (this.multiSelect) {
+      this.updateValue(this.toggleSelection(nextValue));
+      return;
+    }
+
     this.isOpen = false;
     this.updateValue(nextValue);
+  }
+
+  protected clearSelection(): void {
+    if (this.disabled || this.readonly || this.multiSelect) {
+      return;
+    }
+
+    this.searchTerm = '';
+    this.otherDraft = '';
+    this.isOpen = false;
+    this.updateValue(null);
+  }
+
+  protected handleClearClick(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.clearSelection();
   }
 
   protected applyOtherValue(): void {
     const trimmedValue = this.otherDraft.trim();
 
-    this.isOpen = false;
-    this.updateValue({
+    const nextValue: DropdownSelection = {
       selectedKey: undefined,
       selectedLabel: 'Other',
       isOther: true,
       otherValue: trimmedValue
-    });
+    };
+
+    if (this.multiSelect) {
+      this.updateValue(this.addSelection(nextValue));
+    } else {
+      this.isOpen = false;
+      this.updateValue(nextValue);
+    }
+
     this.otherDraft = '';
+  }
+
+  protected isOptionSelected(option: DropdownOption): boolean {
+    if (Array.isArray(this.selection)) {
+      return this.selection.some(
+        (item) => !item.isOther && item.selectedKey === option.value
+      );
+    }
+
+    return this.selection?.selectedKey === option.value && !this.selection?.isOther;
   }
 
   @HostListener('document:click', ['$event'])
@@ -163,10 +240,59 @@ export class DropdownFieldComponent implements ControlValueAccessor {
     }
   }
 
-  private updateValue(value: DropdownSelection | null): void {
+  private updateValue(value: DropdownValue): void {
     this.selection = value;
     this.onChange(value);
     this.onTouched();
+  }
+
+  private toggleSelection(selection: DropdownSelection): DropdownSelection[] {
+    const selections = this.getSelections();
+    const exists = selections.some(
+      (item) => !item.isOther && item.selectedKey === selection.selectedKey
+    );
+
+    if (exists) {
+      return selections.filter(
+        (item) => item.isOther || item.selectedKey !== selection.selectedKey
+      );
+    }
+
+    return [...selections, selection];
+  }
+
+  private addSelection(selection: DropdownSelection): DropdownSelection[] {
+    const selections = this.getSelections();
+
+    if (selection.isOther) {
+      return [
+        ...selections.filter(
+          (item) =>
+            !item.isOther ||
+            item.otherValue?.trim().toLowerCase() !==
+              selection.otherValue?.trim().toLowerCase()
+        ),
+        selection
+      ];
+    }
+
+    return this.toggleSelection(selection);
+  }
+
+  private getSelections(): DropdownSelection[] {
+    if (Array.isArray(this.selection)) {
+      return this.selection;
+    }
+
+    return this.selection ? [this.selection] : [];
+  }
+
+  private getSelectionLabel(selection: DropdownSelection): string {
+    if (selection.isOther) {
+      return selection.otherValue?.trim() || 'Other';
+    }
+
+    return selection.selectedLabel || String(selection.selectedKey ?? '');
   }
 }
 

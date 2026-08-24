@@ -248,6 +248,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
                 .WithMany(lookup => lookup.CompanyScopeRoles)
                 .HasForeignKey(role => role.CompanyScopeLookupId)
                 .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(role => role.Name).IsUnique();
             entity.HasIndex(role => role.CompanyScopeLookupId);
         });
 

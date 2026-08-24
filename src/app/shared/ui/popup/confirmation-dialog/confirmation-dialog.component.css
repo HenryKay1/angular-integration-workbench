@@ -1,0 +1,6 @@
+.confirmation-dialog__message {
+  margin: 0;
+  color: #263238;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}

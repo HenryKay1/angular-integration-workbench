@@ -1,6 +1,7 @@
 import { CommonModule, JsonPipe } from '@angular/common';
 import { Component } from '@angular/core';
 import {
+  DropdownOption,
   DropdownSelection,
   FormConfig,
   FormSubmissionValue
@@ -20,6 +21,18 @@ export class FormFoundationDemoPageComponent {
   protected cancelCount = 0;
   protected lastSubmission: FormSubmissionValue | null = null;
 
+  private readonly usStateOptions: DropdownOption[] = [
+    { label: 'Texas', value: 'TX' },
+    { label: 'California', value: 'CA' },
+    { label: 'New York', value: 'NY' }
+  ];
+
+  private readonly canadianProvinceOptions: DropdownOption[] = [
+    { label: 'Ontario', value: 'ON' },
+    { label: 'Quebec', value: 'QC' },
+    { label: 'British Columbia', value: 'BC' }
+  ];
+
   protected readonly initialValue: FormSubmissionValue = {
     profileImage: null,
     title: 'Quarterly integration refresh',
@@ -27,6 +40,16 @@ export class FormFoundationDemoPageComponent {
     category: {
       selectedKey: 'operations',
       selectedLabel: 'Operations',
+      isOther: false
+    } satisfies DropdownSelection,
+    country: {
+      selectedKey: 'US',
+      selectedLabel: 'United States',
+      isOther: false
+    } satisfies DropdownSelection,
+    state: {
+      selectedKey: 'TX',
+      selectedLabel: 'Texas',
       isOther: false
     } satisfies DropdownSelection,
     retryCount: 2,
@@ -68,7 +91,6 @@ export class FormFoundationDemoPageComponent {
         key: 'profileImage',
         label: 'Profile image',
         type: 'image-crop',
-        required: false,
         accept: 'image/*',
         shape: 'circle',
         frameSizePx: 80,
@@ -83,23 +105,43 @@ export class FormFoundationDemoPageComponent {
         key: 'title',
         label: 'Title',
         type: 'text',
-        required: true,
         placeholder: 'Enter a concise title',
+        validators: [
+          {
+            validator: 'required',
+            message: 'Title is required.'
+          },
+          {
+            validator: 'maxLength',
+            value: 100,
+            message: 'Title cannot exceed 100 characters.'
+          }
+        ],
         colSpan: 2
       },
       {
         key: 'owner',
         label: 'Owner',
         type: 'text',
-        required: true
+        validators: [
+          {
+            validator: 'required',
+            message: 'Owner is required.'
+          }
+        ]
       },
       {
         key: 'category',
         label: 'Category',
         type: 'dropdown',
-        required: true,
         searchable: true,
         placeholder: 'Choose a category',
+        validators: [
+          {
+            validator: 'required',
+            message: 'Category is required.'
+          }
+        ],
         options: [
           { label: 'Operations', value: 'operations' },
           { label: 'Compliance', value: 'compliance' },
@@ -108,18 +150,70 @@ export class FormFoundationDemoPageComponent {
         ]
       },
       {
+        key: 'country',
+        label: 'Country',
+        type: 'dropdown',
+        searchable: true,
+        placeholder: 'Choose a country',
+        validators: [
+          {
+            validator: 'required',
+            message: 'Country is required.'
+          }
+        ],
+        options: [
+          { label: 'United States', value: 'US' },
+          { label: 'Canada', value: 'CA' },
+          { label: 'Mexico', value: 'MX' }
+        ]
+      },
+      {
+        key: 'state',
+        label: 'State',
+        type: 'dropdown',
+        searchable: true,
+        placeholder: 'State or province',
+        options: this.usStateOptions,
+        validators: [
+          {
+            validator: 'required',
+            dependsOn: ['country'],
+            when: ({ values }) =>
+              (values['country'] as DropdownSelection | null)?.selectedKey === 'US',
+            message: 'State is required for U.S. addresses.'
+          }
+        ]
+      },
+      {
         key: 'retryCount',
         label: 'Retry count',
         type: 'number',
         min: 0,
         max: 10,
-        step: 1
+        step: 1,
+        validators: [
+          {
+            validator: 'min',
+            value: 0,
+            message: 'Retry count must be at least 0.'
+          },
+          {
+            validator: 'max',
+            value: 10,
+            message: 'Retry count must be at most 10.'
+          }
+        ]
       },
       {
         key: 'goLiveDate',
         label: 'Go-live date',
         type: 'date',
-        required: true
+        validators: [
+          {
+            validator: 'required',
+            message: 'Go-live date is required.'
+          }
+        ]
       },
       {
         key: 'statusNote',
@@ -134,7 +228,12 @@ export class FormFoundationDemoPageComponent {
         key: 'reviewOwner',
         label: 'Review owner',
         type: 'text',
-        required: true,
+        validators: [
+          {
+            validator: 'required',
+            message: 'Review owner is required.'
+          }
+        ],
         section: 'review-details'
       },
       {
@@ -157,11 +256,16 @@ export class FormFoundationDemoPageComponent {
         key: 'supportingFiles',
         label: 'File Attachments',
         type: 'file-upload',
-        required: true,
         multiple: true,
         maxFiles: 4,
         accept: '.png,.jpg,.jpeg,.pdf,.doc,.docx,.xls,.xlsx,.txt',
         allowAssignedFilename: true,
+        validators: [
+          {
+            validator: 'required',
+            message: 'Please add at least one file.'
+          }
+        ],
         helperText: 'This section can collapse.',
         colSpan: 5,
         section: 'review-details'
@@ -187,14 +291,24 @@ export class FormFoundationDemoPageComponent {
         key: 'releaseManager',
         label: 'Release manager',
         type: 'text',
-        required: true,
+        validators: [
+          {
+            validator: 'required',
+            message: 'Release manager is required.'
+          }
+        ],
         section: 'release-controls'
       },
       {
         key: 'releaseDate',
         label: 'Release date',
         type: 'date',
-        required: true,
+        validators: [
+          {
+            validator: 'required',
+            message: 'Release date is required.'
+          }
+        ],
         section: 'release-controls'
       },
       {
@@ -204,6 +318,18 @@ export class FormFoundationDemoPageComponent {
         min: 1,
         max: 5,
         step: 1,
+        validators: [
+          {
+            validator: 'min',
+            value: 1,
+            message: 'Release risk score must be at least 1.'
+          },
+          {
+            validator: 'max',
+            value: 5,
+            message: 'Release risk score must be at most 5.'
+          }
+        ],
         section: 'release-controls'
       },
       {
@@ -219,6 +345,62 @@ export class FormFoundationDemoPageComponent {
         type: 'checkbox',
         controlStyle: 'checkbox',
         section: 'release-controls'
+      }
+    ],
+    stateRules: [
+      {
+        dependsOn: ['country'],
+        execute: ({ values, fields }) => {
+          const country = (values['country'] as DropdownSelection | null)
+            ?.selectedKey;
+
+          if (country === 'US') {
+            fields.show('state');
+            fields.enable('state');
+            fields.update('state', {
+              label: 'State',
+              placeholder: 'Choose a state'
+            });
+            fields.setOptions('state', this.usStateOptions);
+            return;
+          }
+
+          if (country === 'CA') {
+            fields.show('state');
+            fields.enable('state');
+            fields.update('state', {
+              label: 'Province',
+              placeholder: 'Choose a province'
+            });
+            fields.setOptions('state', this.canadianProvinceOptions);
+            return;
+          }
+
+          fields.hide('state');
+          fields.disable('state');
+          fields.clear('state');
+        }
+      },
+      {
+        dependsOn: ['escalationRequired'],
+        execute: ({ values, fields }) => {
+          const escalationRequired = values['escalationRequired'] === true;
+
+          fields.setReadonly('releaseManager', !escalationRequired);
+          fields.update('releaseManager', {
+            label: escalationRequired
+              ? 'Escalation manager'
+              : 'Release manager'
+          });
+        }
+      },
+      {
+        dependsOn: ['rollbackReady'],
+        execute: ({ values, fields }) => {
+          if (values['rollbackReady'] === true) {
+            fields.reset('retryCount');
+          }
+        }
       }
     ]
   };

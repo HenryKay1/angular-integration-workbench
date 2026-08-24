@@ -1360,6 +1360,9 @@ namespace AngularWorkbench.Api.Data.Migrations
 
                     b.HasIndex("CompanyScopeLookupId");
 
+                    b.HasIndex("Name")
+                        .IsUnique();
+
                     b.ToTable("Roles");
 
                     b.HasData(

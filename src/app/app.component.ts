@@ -94,7 +94,8 @@ export class AppComponent {
         {
           id: 'roles',
           label: 'Roles and permissions',
-          icon: 'shield'
+          icon: 'shield',
+          route: '/roles/new'
         },
         {
           id: 'settings',
