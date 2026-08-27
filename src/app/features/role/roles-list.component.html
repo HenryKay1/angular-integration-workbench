@@ -1,0 +1,32 @@
+<section class="roles-list-page">
+  <header class="roles-list-page__header">
+    <div>
+      <h1>Roles</h1>
+      <p>API-backed role records for testing server DataView processing.</p>
+    </div>
+
+    <a class="roles-list-page__new-link" routerLink="/roles/new">Add role</a>
+  </header>
+
+  <p *ngIf="errorMessage" class="roles-list-page__error" role="alert">
+    {{ errorMessage }}
+  </p>
+
+  <aiw-data-view
+    [items]="roles"
+    [columns]="columns"
+    [cardConfig]="cardConfig"
+    [processingMode]="'server'"
+    [pagination]="pagination"
+    [totalItems]="totalRoles"
+    [isLoading]="isLoading"
+    [itemLink]="roleLink"
+    initialViewMode="table"
+    initialSortField="name"
+    searchPlaceholder="Search roles"
+    emptyMessage="No roles are available."
+    noResultsMessage="No roles match the current criteria."
+    loadingMessage="Loading roles..."
+    (processingChanged)="handleProcessingChanged($event)"
+  />
+</section>

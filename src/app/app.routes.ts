@@ -43,6 +43,14 @@ export const routes: Routes = [
       )
   },
   {
+    path: 'roles',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/role/roles-list.component').then(
+        (module) => module.RolesListComponent
+      )
+  },
+  {
     path: 'roles/new',
     canActivate: [authGuard],
     loadComponent: () =>

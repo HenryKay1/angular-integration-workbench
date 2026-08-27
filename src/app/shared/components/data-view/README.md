@@ -8,6 +8,7 @@
 - support `grid` and `table` display modes
 - render sortable table columns
 - expose Phase 1 filter configuration and filter modal state
+- emit processing state for server-backed pages
 - render loading, empty, and no-results states
 - emit item activation and optionally navigate through `itemLink`
 - host a template-driven detail surface
@@ -20,9 +21,11 @@
 - `searchFields`: field selectors used for built-in client-side search
 - `availableViewModes`: allowed modes, defaults to `['grid', 'table']`
 - `initialViewMode`: initial selected mode
-- `processingMode`: unified future processing mode, either `client` or `server`
-- `initialSortColumn`: optional default table sort column key
+- `processingMode`: processing mode, either `client` or `server`
+- `initialSortField`: optional default table sort field name
 - `initialSortDirection`: default sort direction
+- `pagination`: optional pagination configuration
+- `totalItems`: total item count for server-backed pagination
 - `isLoading`: loading state flag
 - `itemLink`: optional router link resolver for activated items
 - `detailTemplate`: optional per-item template rendered as:
@@ -39,20 +42,20 @@ Public contracts live in `data-view.models.ts`.
 - `DataViewFilterColumnConfig`: per-column filter metadata
 - `DataViewFilter`: committed active filter state
 - `DataViewFilterDraft`: currently edited draft filter
-- `DataViewProcessingState`: future unified search/sort/filter state contract
+- `DataViewProcessingState`: unified search/sort/filter/pagination state contract
+- `DataViewResult<T>`: API result shape for server-backed DataView pages
 
 ## Column Contract
 
-Columns use a stable `key` for component state and a display-only `header` for UI text.
+Columns use a DTO-backed `fieldName` for component state and a display-only `header` for UI text. `fieldName` is typed as a string property from the row item type.
 
 ```ts
 {
-  key: 'status',
+  fieldName: 'status',
   header: 'Status',
   value: record => record.status,
   sortable: true,
   searchable: true,
-  serverField: 'status',
   filter: {
     valueType: 'string',
     controlType: 'select',
@@ -66,17 +69,17 @@ Columns use a stable `key` for component state and a display-only `header` for U
 }
 ```
 
-`value(item)` is the single client-side value accessor for display, sorting, and future client filtering. `serverField` is the single optional server mapping for future server-side processing.
+`fieldName` is the processing identity for sort/filter/server requests. `value(item)` is the client-side value accessor for display, sorting, and filtering, which still allows UI formatting while keeping the processing state aligned with DTO property names.
 
 ## Behavior Notes
 
 - Search is client-side and runs against `searchFields`
 - Sorting is client-side and only applies to columns marked `sortable`
-- Sort identity uses `column.key`, not `column.header`
+- Sort identity uses `column.fieldName`, not `column.header`
 - Table row expansion is intentionally compact, using a leading expander column
 - Grid detail content uses a modal so cards stay visually clean
 - The component stays generic by treating detail content as a template slot rather than hardcoded actions
-- Phase 1 filters can be created, removed, counted, and reopened, but they do not filter `items` yet
+- Filters can be created, removed, counted, edited, reopened, and applied to client-side rows
 
 ## Phase 1 Filtering
 
@@ -96,16 +99,14 @@ The modal supports:
 - row-level draft validation for missing fields, incompatible values, incompatible operators, and exact duplicates
 - AND-only combination validation for conflicting equality, number/date ranges, clear string contradictions, boolean equality, and string-array include/exclude rules
 
-Configuration validation catches developer errors such as duplicate column keys, invalid select setup, incompatible multi-select types, incompatible operators, and missing `serverField` in server mode for participating columns.
+Configuration validation catches developer errors such as duplicate field names, invalid select setup, incompatible multi-select types, and incompatible operators.
 
 ## Phase 2 Seams
 
-`DataViewProcessingState` normalizes current search, sort, filter, and filter-logic state. The component also contains TODO processing seams for future client/server execution.
+`DataViewProcessingState` normalizes current search, sort, filter, filter-logic, and pagination state using DTO field names. In `server` mode, committed search, sort, filter, filter-logic, and pagination changes emit `processingChanged` so the feature component can call an API and pass the returned page back through `items`.
 
-Phase 1 intentionally does not:
+The component intentionally does not:
 
-- apply filters to `items`
-- emit server processing requests
 - translate filters to API DTOs
 - replace the existing `searchFields` search path
 

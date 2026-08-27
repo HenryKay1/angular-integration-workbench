@@ -30,7 +30,7 @@ interface TestItem {
       [cardConfig]="cardConfig"
       [searchFields]="searchFields"
       [initialViewMode]="initialViewMode"
-      [initialSortColumn]="initialSortColumn"
+      [initialSortField]="initialSortField"
       [initialSortDirection]="initialSortDirection"
       [processingMode]="processingMode"
       [pagination]="pagination"
@@ -66,24 +66,22 @@ class DataViewHostComponent {
   ];
   columns: DataViewColumn<TestItem>[] = [
     {
-      key: 'name',
+      fieldName: 'name',
       header: 'Name',
       value: (item) => item.name,
       sortable: true,
       searchable: true,
-      serverField: 'name',
       filter: {
         valueType: 'string',
         controlType: 'input'
       }
     },
     {
-      key: 'status',
+      fieldName: 'status',
       header: 'Status',
       value: (item) => item.status,
       sortable: true,
       searchable: true,
-      serverField: 'status',
       filter: {
         valueType: 'string',
         controlType: 'select',
@@ -96,41 +94,37 @@ class DataViewHostComponent {
       }
     },
     {
-      key: 'score',
+      fieldName: 'score',
       header: 'Score',
       value: (item) => item.score,
       sortable: true,
-      serverField: 'score',
       filter: {
         valueType: 'number',
         controlType: 'input'
       }
     },
     {
-      key: 'enabled',
+      fieldName: 'enabled',
       header: 'Enabled',
       value: (item) => item.enabled,
-      serverField: 'enabled',
       filter: {
         valueType: 'boolean',
         controlType: 'input'
       }
     },
     {
-      key: 'updated',
+      fieldName: 'updatedAt',
       header: 'Updated',
       value: (item) => new Date(item.updatedAt),
-      serverField: 'updatedAt',
       filter: {
         valueType: 'date',
         controlType: 'input'
       }
     },
     {
-      key: 'tags',
+      fieldName: 'tags',
       header: 'Tags',
       value: (item) => item.tags,
-      serverField: 'tags',
       filter: {
         valueType: 'stringArray',
         controlType: 'select',
@@ -149,7 +143,7 @@ class DataViewHostComponent {
   };
   searchFields = [(item: TestItem) => item.name];
   initialViewMode: 'grid' | 'table' = 'grid';
-  initialSortColumn?: string;
+  initialSortField?: keyof TestItem & string;
   initialSortDirection: 'asc' | 'desc' = 'asc';
   processingMode: 'client' | 'server' = 'client';
   pagination?: DataViewPaginationConfig;
@@ -195,9 +189,9 @@ describe('DataViewComponent Phase 1 filtering', () => {
     expect(text()).not.toContain('Alpha');
   });
 
-  it('sorts table data using column keys', () => {
+  it('sorts table data using field names', () => {
     fixture.componentInstance.initialViewMode = 'table';
-    fixture.componentInstance.initialSortColumn = 'score';
+    fixture.componentInstance.initialSortField = 'score';
     fixture.componentInstance.initialSortDirection = 'asc';
     fixture.detectChanges();
 
@@ -528,16 +522,16 @@ describe('DataViewComponent Phase 1 filtering', () => {
   });
 
   it('rejects impossible date ranges', async () => {
-    await addInputFilter('updated', 'greaterThan', '2026-08-20');
-    await addInputFilter('updated', 'lessThan', '2026-08-10');
+    await addInputFilter('updatedAt', 'greaterThan', '2026-08-20');
+    await addInputFilter('updatedAt', 'lessThan', '2026-08-10');
 
     expect(text()).toContain('The filters on "Updated" create an invalid range.');
     expect(activeFilterCount()).toBe('1');
   });
 
   it('rejects date equals values outside date ranges', async () => {
-    await addInputFilter('updated', 'equals', '2026-08-15');
-    await addInputFilter('updated', 'greaterThan', '2026-08-20');
+    await addInputFilter('updatedAt', 'equals', '2026-08-15');
+    await addInputFilter('updatedAt', 'greaterThan', '2026-08-20');
 
     expect(text()).toContain('The filters on "Updated" create an invalid range.');
     expect(activeFilterCount()).toBe('1');
@@ -730,7 +724,7 @@ describe('DataViewComponent Phase 1 filtering', () => {
     ];
     fixture.detectChanges();
 
-    expect(text()).toContain('duplicate column key "name"');
+    expect(text()).toContain('duplicate fieldName "name"');
     expect(console.error).toHaveBeenCalled();
   });
 
@@ -739,12 +733,12 @@ describe('DataViewComponent Phase 1 filtering', () => {
   }
 
   async function addInputFilter(
-    columnKey: string,
+    fieldName: keyof TestItem & string,
     operator: string,
     value: string
   ): Promise<void> {
     openFilters();
-    selectOption(queryAll('.data-view__filter-row--draft select')[0].nativeElement, columnKey);
+    selectOption(queryAll('.data-view__filter-row--draft select')[0].nativeElement, fieldName);
     fixture.detectChanges();
     await fixture.whenStable();
     selectOption(queryAll('.data-view__filter-row--draft select')[1].nativeElement, operator);
@@ -758,12 +752,12 @@ describe('DataViewComponent Phase 1 filtering', () => {
   }
 
   async function addSelectFilter(
-    columnKey: string,
+    fieldName: keyof TestItem & string,
     operator: string,
     valueLabel: string
   ): Promise<void> {
     openFilters();
-    selectOption(queryAll('.data-view__filter-row--draft select')[0].nativeElement, columnKey);
+    selectOption(queryAll('.data-view__filter-row--draft select')[0].nativeElement, fieldName);
     fixture.detectChanges();
     await fixture.whenStable();
     selectOption(queryAll('.data-view__filter-row--draft select')[1].nativeElement, operator);
@@ -778,12 +772,12 @@ describe('DataViewComponent Phase 1 filtering', () => {
   }
 
   async function addMultiSelectFilter(
-    columnKey: string,
+    fieldName: keyof TestItem & string,
     operator: string,
     valueLabels: string[]
   ): Promise<void> {
     openFilters();
-    selectOption(queryAll('.data-view__filter-row--draft select')[0].nativeElement, columnKey);
+    selectOption(queryAll('.data-view__filter-row--draft select')[0].nativeElement, fieldName);
     fixture.detectChanges();
     await fixture.whenStable();
     selectOption(queryAll('.data-view__filter-row--draft select')[1].nativeElement, operator);
@@ -908,3 +902,4 @@ describe('DataViewComponent Phase 1 filtering', () => {
     });
   }
 });
+

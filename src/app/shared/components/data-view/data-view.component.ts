@@ -15,6 +15,7 @@ import {
   DataViewCardConfig,
   DataViewColumn,
   DataViewDetailContext,
+  DataViewFieldName,
   DataViewFilter,
   DataViewFilterColumnConfig,
   DataViewFilterControlType,
@@ -28,6 +29,7 @@ import {
   DataViewMode,
   DataViewPaginationConfig,
   DataViewProcessingMode,
+  DataViewResult,
   DataViewProcessingState,
   DataViewSortDirection,
   DataViewValue
@@ -39,6 +41,7 @@ export type {
   DataViewColumn,
   DataViewDetailContext,
   DataViewDropdownType,
+  DataViewFieldName,
   DataViewFilter,
   DataViewFilterColumnConfig,
   DataViewFilterControlType,
@@ -53,6 +56,7 @@ export type {
   DataViewPaginationConfig,
   DataViewPaginationState,
   DataViewProcessingMode,
+  DataViewResult,
   DataViewProcessingState,
   DataViewSortDirection,
   DataViewSortState,
@@ -120,26 +124,25 @@ export class DataViewComponent<T> implements OnChanges {
   @Input() availableViewModes: DataViewMode[] = ['grid', 'table'];
   @Input() initialViewMode: DataViewMode = 'grid';
   @Input() itemLink?: (item: T) => string[];
-  @Input() initialSortColumn?: string;
+  @Input() initialSortField?: DataViewFieldName<T>;
   @Input() initialSortDirection: DataViewSortDirection = 'asc';
   @Input() detailTemplate?: TemplateRef<DataViewDetailContext<T>>;
   @Input() pagination?: DataViewPaginationConfig;
+  @Input() totalItems?: number;
 
   @Output() itemActivated = new EventEmitter<T>();
-
-  // Reserved for Phase 2 server processing. Do not emit in Phase 1.
-  @Output() processingChanged = new EventEmitter<DataViewProcessingState>();
+  @Output() processingChanged = new EventEmitter<DataViewProcessingState<T>>();
 
   protected searchTerm = '';
   protected selectedViewMode: DataViewMode = this.initialViewMode;
-  protected activeSortColumn?: string;
+  protected activeSortField?: DataViewFieldName<T>;
   protected activeSortDirection: DataViewSortDirection = this.initialSortDirection;
   protected expandedItem?: T;
   protected detailModalItem?: T;
   protected isFilterModalOpen = false;
-  protected activeFilters: DataViewFilter[] = [];
-  protected filterDraft: DataViewFilterDraft = {};
-  protected editFilterDraft: DataViewFilterDraft = {};
+  protected activeFilters: DataViewFilter<T>[] = [];
+  protected filterDraft: DataViewFilterDraft<T> = {};
+  protected editFilterDraft: DataViewFilterDraft<T> = {};
   protected editingFilterId?: string;
   protected filterLogic: DataViewFilterLogic = 'and';
   protected configurationError: string | null = null;
@@ -150,6 +153,10 @@ export class DataViewComponent<T> implements OnChanges {
   private hasLoggedConfigurationError = false;
 
   protected get processedItems(): T[] {
+    if (this.processingMode === 'server') {
+      return this.items;
+    }
+
     const sortedItems = this.sortItems(this.filteredItems);
 
     if (!this.isPaginationEnabled) {
@@ -176,6 +183,22 @@ export class DataViewComponent<T> implements OnChanges {
     return searchedItems.filter((item) => this.itemMatchesActiveFilters(item));
   }
 
+  protected get displayItemCount(): number {
+    if (this.processingMode === 'server') {
+      return this.toNonNegativeInteger(this.totalItems, this.items.length);
+    }
+
+    return this.filteredItems.length;
+  }
+
+  protected get hasDisplayItems(): boolean {
+    if (this.processingMode === 'server') {
+      return this.items.length > 0;
+    }
+
+    return this.filteredItems.length > 0;
+  }
+
   protected get filterableColumns(): DataViewColumn<T>[] {
     return this.columns.filter((column) => !!column.filter);
   }
@@ -193,7 +216,7 @@ export class DataViewComponent<T> implements OnChanges {
   }
 
   protected get pageCount(): number {
-    return Math.max(1, Math.ceil(this.filteredItems.length / this.pageSize));
+    return Math.max(1, Math.ceil(this.displayItemCount / this.pageSize));
   }
 
   protected get currentPage(): number {
@@ -201,7 +224,7 @@ export class DataViewComponent<T> implements OnChanges {
   }
 
   protected get pageStartItem(): number {
-    if (this.filteredItems.length === 0) {
+    if (this.displayItemCount === 0) {
       return 0;
     }
 
@@ -209,7 +232,14 @@ export class DataViewComponent<T> implements OnChanges {
   }
 
   protected get pageEndItem(): number {
-    return Math.min(this.filteredItems.length, (this.pageIndex + 1) * this.pageSize);
+    if (this.processingMode === 'server') {
+      return Math.min(
+        this.displayItemCount,
+        this.pageIndex * this.pageSize + this.items.length
+      );
+    }
+
+    return Math.min(this.displayItemCount, (this.pageIndex + 1) * this.pageSize);
   }
 
   protected get fastStep(): number {
@@ -260,7 +290,7 @@ export class DataViewComponent<T> implements OnChanges {
 
   protected get selectedDraftColumn(): DataViewColumn<T> | undefined {
     return this.columns.find(
-      (column) => column.key === this.filterDraft.columnKey
+      (column) => column.fieldName === this.filterDraft.fieldName
     );
   }
 
@@ -292,7 +322,7 @@ export class DataViewComponent<T> implements OnChanges {
 
   protected get selectedEditColumn(): DataViewColumn<T> | undefined {
     return this.columns.find(
-      (column) => column.key === this.editFilterDraft.columnKey
+      (column) => column.fieldName === this.editFilterDraft.fieldName
     );
   }
 
@@ -322,7 +352,7 @@ export class DataViewComponent<T> implements OnChanges {
     return this.selectedEditColumn?.filter?.dropdownType === 'multi';
   }
 
-  protected get currentProcessingState(): DataViewProcessingState {
+  protected get currentProcessingState(): DataViewProcessingState<T> {
     return this.buildProcessingState();
   }
 
@@ -331,7 +361,7 @@ export class DataViewComponent<T> implements OnChanges {
       this.syncPageSizeFromConfig();
     }
 
-    if (changes['items']) {
+    if (changes['items'] || changes['totalItems']) {
       this.clampPageIndex();
     }
 
@@ -360,8 +390,8 @@ export class DataViewComponent<T> implements OnChanges {
       this.selectedViewMode = this.availableViewModes[0] ?? 'grid';
     }
 
-    if (!this.activeSortColumn && this.initialSortColumn) {
-      this.activeSortColumn = this.initialSortColumn;
+    if (!this.activeSortField && this.initialSortField) {
+      this.activeSortField = this.initialSortField;
       this.activeSortDirection = this.initialSortDirection;
     }
 
@@ -420,13 +450,14 @@ export class DataViewComponent<T> implements OnChanges {
       ...this.activeFilters,
       {
         id: this.createFilterId(),
-        columnKey: this.filterDraft.columnKey!,
+        fieldName: this.filterDraft.fieldName!,
         operator: this.filterDraft.operator!,
         value: this.normalizeFilterValue(this.filterDraft.value)
       }
     ];
     this.resetFilterDraft();
     this.resetPagination();
+    this.emitProcessingChanged();
   }
 
   protected removeFilter(filterId: string): void {
@@ -439,6 +470,7 @@ export class DataViewComponent<T> implements OnChanges {
     }
 
     this.resetPagination();
+    this.emitProcessingChanged();
   }
 
   protected clearAllFilters(): void {
@@ -446,13 +478,14 @@ export class DataViewComponent<T> implements OnChanges {
     this.resetFilterDraft();
     this.resetEditFilterDraft();
     this.resetPagination();
+    this.emitProcessingChanged();
   }
 
-  protected handleDraftColumnChange(columnKey: string): void {
+  protected handleDraftColumnChange(fieldName: DataViewFieldName<T> | ''): void {
     this.filterDraft = {
-      columnKey: columnKey || undefined,
+      fieldName: fieldName || undefined,
       operator: undefined,
-      value: this.getEmptyDraftValue(columnKey),
+      value: this.getEmptyDraftValue(fieldName),
       error: undefined
     };
   }
@@ -473,11 +506,11 @@ export class DataViewComponent<T> implements OnChanges {
     };
   }
 
-  protected startFilterEdit(filter: DataViewFilter): void {
+  protected startFilterEdit(filter: DataViewFilter<T>): void {
     this.filterDraft = {};
     this.editingFilterId = filter.id;
     this.editFilterDraft = {
-      columnKey: filter.columnKey,
+      fieldName: filter.fieldName,
       operator: filter.operator,
       value: filter.value,
       error: undefined
@@ -502,9 +535,9 @@ export class DataViewComponent<T> implements OnChanges {
       return;
     }
 
-    const editedFilter: DataViewFilter = {
+    const editedFilter: DataViewFilter<T> = {
       id: this.editingFilterId,
-      columnKey: this.editFilterDraft.columnKey!,
+      fieldName: this.editFilterDraft.fieldName!,
       operator: this.editFilterDraft.operator!,
       value: this.normalizeFilterValue(this.editFilterDraft.value)
     };
@@ -514,6 +547,7 @@ export class DataViewComponent<T> implements OnChanges {
     );
     this.resetEditFilterDraft();
     this.resetPagination();
+    this.emitProcessingChanged();
   }
 
   protected handleEditOperatorChange(operator: string): void {
@@ -544,36 +578,40 @@ export class DataViewComponent<T> implements OnChanges {
   }
 
   protected toggleSort(column: DataViewColumn<T>): void {
-    const columnKey = column.key;
+    const fieldName = column.fieldName;
 
-    if (this.activeSortColumn === columnKey) {
+    if (this.activeSortField === fieldName) {
       this.activeSortDirection =
         this.activeSortDirection === 'asc' ? 'desc' : 'asc';
       this.resetPagination();
+      this.emitProcessingChanged();
       return;
     }
 
-    this.activeSortColumn = columnKey;
+    this.activeSortField = fieldName;
     this.activeSortDirection = 'asc';
     this.resetPagination();
+    this.emitProcessingChanged();
   }
 
   protected handleSearchTermChange(value: string): void {
     this.searchTerm = value;
     this.resetPagination();
+    this.emitProcessingChanged();
   }
 
   protected handleFilterLogicChange(logic: DataViewFilterLogic): void {
     this.filterLogic = logic;
     this.resetPagination();
+    this.emitProcessingChanged();
   }
 
   protected movePage(delta: number): void {
-    this.pageIndex = this.clampPageNumber(this.pageIndex + delta);
+    this.updatePageIndex(this.pageIndex + delta);
   }
 
   protected goToPage(pageNumber: number): void {
-    this.pageIndex = this.clampPageNumber(pageNumber - 1);
+    this.updatePageIndex(pageNumber - 1);
   }
 
   protected handlePageItemClick(pageItem: number | 'ellipsis'): void {
@@ -595,7 +633,7 @@ export class DataViewComponent<T> implements OnChanges {
     input?: HTMLInputElement
   ): void {
     const pageNumber = this.toPositiveInteger(value, this.currentPage);
-    this.pageIndex = this.clampPageNumber(pageNumber - 1);
+    this.updatePageIndex(pageNumber - 1);
 
     if (input) {
       input.value = String(this.currentPage);
@@ -603,7 +641,7 @@ export class DataViewComponent<T> implements OnChanges {
   }
 
   protected getSortIndicator(column: DataViewColumn<T>): string {
-    if (this.activeSortColumn !== column.key) {
+    if (this.activeSortField !== column.fieldName) {
       return '↕';
     }
 
@@ -626,18 +664,18 @@ export class DataViewComponent<T> implements OnChanges {
     return String(value);
   }
 
-  protected getFilterSummary(filter: DataViewFilter): string {
-    const column = this.columns.find((item) => item.key === filter.columnKey);
+  protected getFilterSummary(filter: DataViewFilter<T>): string {
+    const column = this.columns.find((item) => item.fieldName === filter.fieldName);
 
     return [
-      column?.header ?? filter.columnKey,
+      column?.header ?? filter.fieldName,
       FILTER_OPERATOR_LABELS[filter.operator],
       this.formatFilterValue(filter.value)
     ].join(' ');
   }
 
-  protected getColumnHeader(columnKey: string): string {
-    return this.columns.find((column) => column.key === columnKey)?.header ?? columnKey;
+  protected getColumnHeader(fieldName: DataViewFieldName<T>): string {
+    return this.columns.find((column) => column.fieldName === fieldName)?.header ?? fieldName;
   }
 
   protected getOperatorLabel(operator: DataViewFilterOperator): string {
@@ -658,7 +696,7 @@ export class DataViewComponent<T> implements OnChanges {
 
   private sortItems(items: T[]): T[] {
     const activeColumn = this.columns.find(
-      (column) => column.key === this.activeSortColumn && column.sortable
+      (column) => column.fieldName === this.activeSortField && column.sortable
     );
 
     if (!activeColumn) {
@@ -704,6 +742,17 @@ export class DataViewComponent<T> implements OnChanges {
     this.pageIndex = this.clampPageNumber(this.pageIndex);
   }
 
+  private updatePageIndex(pageIndex: number): void {
+    const nextPageIndex = this.clampPageNumber(pageIndex);
+
+    if (nextPageIndex === this.pageIndex) {
+      return;
+    }
+
+    this.pageIndex = nextPageIndex;
+    this.emitProcessingChanged();
+  }
+
   private clampPageNumber(pageIndex: number): number {
     return Math.min(Math.max(pageIndex, 0), this.pageCount - 1);
   }
@@ -715,6 +764,19 @@ export class DataViewComponent<T> implements OnChanges {
     const numericValue = Number(value);
 
     if (!Number.isFinite(numericValue) || numericValue < 1) {
+      return fallback;
+    }
+
+    return Math.floor(numericValue);
+  }
+
+  private toNonNegativeInteger(
+    value: string | number | undefined,
+    fallback: number
+  ): number {
+    const numericValue = Number(value);
+
+    if (!Number.isFinite(numericValue) || numericValue < 0) {
       return fallback;
     }
 
@@ -753,8 +815,8 @@ export class DataViewComponent<T> implements OnChanges {
       : matches.some(Boolean);
   }
 
-  private itemMatchesFilter(item: T, filter: DataViewFilter): boolean {
-    const column = this.getColumnByKey(filter.columnKey);
+  private itemMatchesFilter(item: T, filter: DataViewFilter<T>): boolean {
+    const column = this.getColumnByFieldName(filter.fieldName);
 
     if (!column?.filter) {
       return true;
@@ -783,7 +845,7 @@ export class DataViewComponent<T> implements OnChanges {
 
   private stringMatchesFilter(
     rawValue: DataViewValue,
-    filter: DataViewFilter
+    filter: DataViewFilter<T>
   ): boolean {
     const itemValue = String(rawValue ?? '').toLowerCase();
     const filterValue = String(filter.value ?? '').toLowerCase();
@@ -813,7 +875,7 @@ export class DataViewComponent<T> implements OnChanges {
 
   private numberMatchesFilter(
     rawValue: DataViewValue,
-    filter: DataViewFilter
+    filter: DataViewFilter<T>
   ): boolean {
     const itemValue = Number(rawValue);
     const filterValue =
@@ -852,7 +914,7 @@ export class DataViewComponent<T> implements OnChanges {
 
   private dateMatchesFilter(
     rawValue: DataViewValue,
-    filter: DataViewFilter
+    filter: DataViewFilter<T>
   ): boolean {
     const itemTimestamp = this.toDateFilterValue(rawValue as DataViewFilterValue);
     const filterTimestamp = this.toDateFilterValue(filter.value);
@@ -881,7 +943,7 @@ export class DataViewComponent<T> implements OnChanges {
 
   private booleanMatchesFilter(
     rawValue: DataViewValue,
-    filter: DataViewFilter
+    filter: DataViewFilter<T>
   ): boolean {
     const itemValue =
       typeof rawValue === 'boolean' ? rawValue : String(rawValue) === 'true';
@@ -903,7 +965,7 @@ export class DataViewComponent<T> implements OnChanges {
 
   private stringArrayMatchesFilter(
     rawValue: DataViewValue,
-    filter: DataViewFilter
+    filter: DataViewFilter<T>
   ): boolean {
     const itemValues = new Set(
       (Array.isArray(rawValue) ? rawValue : [rawValue])
@@ -947,14 +1009,14 @@ export class DataViewComponent<T> implements OnChanges {
   }
 
   private validateFilterInput(
-    filterInput: DataViewFilterDraft,
+    filterInput: DataViewFilterDraft<T>,
     excludedFilterId?: string
   ): string | null {
-    const column = filterInput.columnKey
-      ? this.getColumnByKey(filterInput.columnKey)
+    const column = filterInput.fieldName
+      ? this.getColumnByFieldName(filterInput.fieldName)
       : undefined;
 
-    if (!filterInput.columnKey || !column?.filter) {
+    if (!filterInput.fieldName || !column?.filter) {
       return 'Select a column before adding a filter.';
     }
 
@@ -1026,7 +1088,7 @@ export class DataViewComponent<T> implements OnChanges {
   }
 
   private hasDuplicateFilter(
-    filterInput: DataViewFilterDraft,
+    filterInput: DataViewFilterDraft<T>,
     excludedFilterId?: string
   ): boolean {
     const nextValue = this.serializeFilterValue(
@@ -1036,31 +1098,31 @@ export class DataViewComponent<T> implements OnChanges {
     return this.activeFilters.some(
       (filter) =>
         filter.id !== excludedFilterId &&
-        filter.columnKey === filterInput.columnKey &&
+        filter.fieldName === filterInput.fieldName &&
         filter.operator === filterInput.operator &&
         this.serializeFilterValue(filter.value) === nextValue
     );
   }
 
   private validateFilterCombination(
-    filterInput: DataViewFilterDraft,
+    filterInput: DataViewFilterDraft<T>,
     excludedFilterId?: string
   ): string | null {
     if (this.filterLogic !== 'and') {
       return null;
     }
 
-    const column = filterInput.columnKey
-      ? this.getColumnByKey(filterInput.columnKey)
+    const column = filterInput.fieldName
+      ? this.getColumnByFieldName(filterInput.fieldName)
       : undefined;
 
-    if (!column?.filter || !filterInput.columnKey || !filterInput.operator) {
+    if (!column?.filter || !filterInput.fieldName || !filterInput.operator) {
       return null;
     }
 
-    const candidate: DataViewFilter = {
+    const candidate: DataViewFilter<T> = {
       id: excludedFilterId ?? 'draft-filter',
-      columnKey: filterInput.columnKey,
+      fieldName: filterInput.fieldName,
       operator: filterInput.operator,
       value: this.normalizeFilterValue(filterInput.value)
     };
@@ -1068,7 +1130,7 @@ export class DataViewComponent<T> implements OnChanges {
       ...this.activeFilters.filter(
         (filter) =>
           filter.id !== excludedFilterId &&
-          filter.columnKey === candidate.columnKey
+          filter.fieldName === candidate.fieldName
       ),
       candidate
     ];
@@ -1104,7 +1166,7 @@ export class DataViewComponent<T> implements OnChanges {
   }
 
   private validateEqualityCombination(
-    filters: DataViewFilter[],
+    filters: DataViewFilter<T>[],
     columnHeader: string
   ): string | null {
     const equalsFilters = filters.filter((filter) => filter.operator === 'equals');
@@ -1134,7 +1196,7 @@ export class DataViewComponent<T> implements OnChanges {
   }
 
   private validateNumberFilterCombination(
-    filters: DataViewFilter[],
+    filters: DataViewFilter<T>[],
     columnHeader: string
   ): string | null {
     let lowerBound: { value: number; inclusive: boolean } | undefined;
@@ -1211,7 +1273,7 @@ export class DataViewComponent<T> implements OnChanges {
   }
 
   private validateDateFilterCombination(
-    filters: DataViewFilter[],
+    filters: DataViewFilter<T>[],
     columnHeader: string
   ): string | null {
     let lowerBound: { value: number; inclusive: boolean } | undefined;
@@ -1261,7 +1323,7 @@ export class DataViewComponent<T> implements OnChanges {
   }
 
   private validateStringFilterCombination(
-    filters: DataViewFilter[],
+    filters: DataViewFilter<T>[],
     columnHeader: string
   ): string | null {
     const stringFilters = filters
@@ -1329,7 +1391,7 @@ export class DataViewComponent<T> implements OnChanges {
   }
 
   private validateStringArrayFilterCombination(
-    filters: DataViewFilter[],
+    filters: DataViewFilter<T>[],
     columnHeader: string
   ): string | null {
     const requiredValues = new Set<string>();
@@ -1502,8 +1564,10 @@ export class DataViewComponent<T> implements OnChanges {
     this.editFilterDraft = {};
   }
 
-  private getEmptyDraftValue(columnKey: string): DataViewFilterValue | undefined {
-    const column = this.columns.find((item) => item.key === columnKey);
+  private getEmptyDraftValue(
+    fieldName: DataViewFieldName<T> | ''
+  ): DataViewFilterValue | undefined {
+    const column = this.columns.find((item) => item.fieldName === fieldName);
 
     return column?.filter?.dropdownType === 'multi' ? [] : undefined;
   }
@@ -1534,10 +1598,10 @@ export class DataViewComponent<T> implements OnChanges {
   }
 
   private validateConfiguration(): string | null {
-    const duplicateKey = this.findDuplicateColumnKey();
+    const duplicateFieldName = this.findDuplicateFieldName();
 
-    if (duplicateKey) {
-      return `DataView configuration error: duplicate column key "${duplicateKey}".`;
+    if (duplicateFieldName) {
+      return `DataView configuration error: duplicate fieldName "${duplicateFieldName}".`;
     }
 
     for (const column of this.columns) {
@@ -1550,28 +1614,20 @@ export class DataViewComponent<T> implements OnChanges {
           return filterError;
         }
       }
-
-      if (
-        this.processingMode === 'server' &&
-        (column.sortable || column.searchable || column.filter) &&
-        !column.serverField?.trim()
-      ) {
-        return `DataView configuration error: column "${column.key}" participates in server processing but has no serverField.`;
-      }
     }
 
     return null;
   }
 
-  private findDuplicateColumnKey(): string | null {
-    const seenKeys = new Set<string>();
+  private findDuplicateFieldName(): DataViewFieldName<T> | null {
+    const seenFieldNames = new Set<DataViewFieldName<T>>();
 
     for (const column of this.columns) {
-      if (seenKeys.has(column.key)) {
-        return column.key;
+      if (seenFieldNames.has(column.fieldName)) {
+        return column.fieldName;
       }
 
-      seenKeys.add(column.key);
+      seenFieldNames.add(column.fieldName);
     }
 
     return null;
@@ -1582,15 +1638,15 @@ export class DataViewComponent<T> implements OnChanges {
     filter: DataViewFilterColumnConfig
   ): string | null {
     if (!filter.valueType) {
-      return `DataView configuration error: filter column "${column.key}" is missing valueType.`;
+      return `DataView configuration error: filter column "${column.fieldName}" is missing valueType.`;
     }
 
     if (filter.dropdownType === 'multi' && filter.valueType !== 'stringArray') {
-      return `DataView configuration error: multi-select filter column "${column.key}" must use stringArray valueType.`;
+      return `DataView configuration error: multi-select filter column "${column.fieldName}" must use stringArray valueType.`;
     }
 
     if (filter.controlType === 'select' && (!filter.options || filter.options.length === 0)) {
-      return `DataView configuration error: select filter column "${column.key}" must provide options.`;
+      return `DataView configuration error: select filter column "${column.fieldName}" must provide options.`;
     }
 
     const compatibleOperators = this.getDefaultCompatibleOperators(filter);
@@ -1599,29 +1655,29 @@ export class DataViewComponent<T> implements OnChanges {
     );
 
     if (invalidOperator) {
-      return `DataView configuration error: operator "${invalidOperator}" is not compatible with column "${column.key}".`;
+      return `DataView configuration error: operator "${invalidOperator}" is not compatible with column "${column.fieldName}".`;
     }
 
     return null;
   }
 
   private pruneFiltersForCurrentColumns(): void {
-    const validColumnKeys = new Set(this.columns.map((column) => column.key));
+    const validFieldNames = new Set(this.columns.map((column) => column.fieldName));
 
     this.activeFilters = this.activeFilters.filter((filter) =>
-      validColumnKeys.has(filter.columnKey)
+      validFieldNames.has(filter.fieldName)
     );
 
     if (
-      this.filterDraft.columnKey &&
-      !validColumnKeys.has(this.filterDraft.columnKey)
+      this.filterDraft.fieldName &&
+      !validFieldNames.has(this.filterDraft.fieldName)
     ) {
       this.resetFilterDraft();
     }
 
     if (
-      this.editFilterDraft.columnKey &&
-      !validColumnKeys.has(this.editFilterDraft.columnKey)
+      this.editFilterDraft.fieldName &&
+      !validFieldNames.has(this.editFilterDraft.fieldName)
     ) {
       this.resetEditFilterDraft();
     }
@@ -1634,16 +1690,18 @@ export class DataViewComponent<T> implements OnChanges {
     return filterId;
   }
 
-  private getColumnByKey(columnKey: string): DataViewColumn<T> | undefined {
-    return this.columns.find((column) => column.key === columnKey);
+  private getColumnByFieldName(
+    fieldName: DataViewFieldName<T>
+  ): DataViewColumn<T> | undefined {
+    return this.columns.find((column) => column.fieldName === fieldName);
   }
 
-  private buildProcessingState(): DataViewProcessingState {
-    const state: DataViewProcessingState = {
+  private buildProcessingState(): DataViewProcessingState<T> {
+    const state: DataViewProcessingState<T> = {
       searchTerm: this.searchTerm,
-      sort: this.activeSortColumn
+      sort: this.activeSortField
         ? {
-            columnKey: this.activeSortColumn,
+            fieldName: this.activeSortField,
             direction: this.activeSortDirection
           }
         : undefined,
@@ -1661,9 +1719,17 @@ export class DataViewComponent<T> implements OnChanges {
     return state;
   }
 
+  private emitProcessingChanged(): void {
+    if (this.processingMode !== 'server') {
+      return;
+    }
+
+    this.processingChanged.emit(this.buildProcessingState());
+  }
+
   private processClientSide(
     items: T[],
-    _state: DataViewProcessingState
+    _state: DataViewProcessingState<T>
   ): T[] {
     // TODO Phase 2:
     // Apply unified search, sorting, pagination, and filtering using column.value(...).
@@ -1671,9 +1737,9 @@ export class DataViewComponent<T> implements OnChanges {
     return items;
   }
 
-  private processServerSide(_state: DataViewProcessingState): void {
-    // TODO Phase 2:
-    // Translate column keys through column.serverField and emit/request server-side processing.
-    // This component intentionally does not trigger server requests in Phase 1.
+  private processServerSide(_state: DataViewProcessingState<T>): void {
+    this.emitProcessingChanged();
   }
 }
+
+

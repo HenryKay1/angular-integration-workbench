@@ -1,4 +1,5 @@
 ﻿using AngularWorkbench.Api.Models.DTOS.Access;
+using AngularWorkbench.Api.Models.DTOS.DataView;
 using AngularWorkbench.Api.Models.DTOS.Requests;
 using AngularWorkbench.Api.Services.Access.Interfaces;
 using AngularWorkbench.Api.Services.Organization.Interfaces;
@@ -30,6 +31,16 @@ namespace AngularWorkbench.Api.Controllers.Access
             CancellationToken cancellationToken)
         {
             var roles = await _roleService.GetActiveAsync(
+                cancellationToken);
+
+            return Ok(roles);
+        }
+
+        [HttpPost("roles/dataview")]
+        public async Task<ActionResult<DataViewResultDto<RoleDto>>> GetRolesDataViewAsync(DataViewRequestDto request,CancellationToken cancellationToken)
+        {
+            var roles = await _roleService.GetRolesDataViewAsync(
+                request,
                 cancellationToken);
 
             return Ok(roles);

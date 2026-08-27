@@ -3,6 +3,10 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../../core/http/api.config';
 import {
+  DataViewProcessingState,
+  DataViewResult
+} from '../../shared/components/data-view/data-view.models';
+import {
   PermissionViewModel,
   RoleDetailsViewModel,
   RoleNameValidationRequest,
@@ -21,6 +25,15 @@ export class RoleService {
 
   listRoles(): Observable<RoleViewModel[]> {
     return this.http.get<RoleViewModel[]>(`${this.accessUrl}/roles`);
+  }
+
+  listRolesDataView(
+    request: DataViewProcessingState<RoleViewModel>
+  ): Observable<DataViewResult<RoleViewModel>> {
+    return this.http.post<DataViewResult<RoleViewModel>>(
+      `${this.accessUrl}/roles/dataview`,
+      request
+    );
   }
 
   getRole(roleId: number): Observable<RoleViewModel> {

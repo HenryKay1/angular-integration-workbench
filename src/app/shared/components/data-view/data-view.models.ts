@@ -28,6 +28,8 @@ export type DataViewFilterValue =
   | string[]
   | null;
 
+export type DataViewFieldName<T> = Extract<keyof T, string>;
+
 export type DataViewFilterControlType = 'input' | 'select';
 export type DataViewDropdownType = 'single' | 'multi';
 
@@ -65,22 +67,22 @@ export interface DataViewFilterColumnConfig {
 
 export type DataViewFilterLogic = 'and' | 'or';
 
-export interface DataViewFilter {
+export interface DataViewFilter<T = Record<string, unknown>> {
   id: string;
-  columnKey: string;
+  fieldName: DataViewFieldName<T>;
   operator: DataViewFilterOperator;
   value: DataViewFilterValue;
 }
 
-export interface DataViewFilterDraft {
-  columnKey?: string;
+export interface DataViewFilterDraft<T = Record<string, unknown>> {
+  fieldName?: DataViewFieldName<T>;
   operator?: DataViewFilterOperator;
   value?: DataViewFilterValue;
   error?: string;
 }
 
-export interface DataViewSortState {
-  columnKey: string;
+export interface DataViewSortState<T = Record<string, unknown>> {
+  fieldName: DataViewFieldName<T>;
   direction: DataViewSortDirection;
 }
 
@@ -95,22 +97,26 @@ export interface DataViewPaginationState {
   pageSize: number;
 }
 
-export interface DataViewProcessingState {
+export interface DataViewProcessingState<T = Record<string, unknown>> {
   searchTerm: string;
-  sort?: DataViewSortState;
-  filters: DataViewFilter[];
+  sort?: DataViewSortState<T>;
+  filters: DataViewFilter<T>[];
   filterLogic: DataViewFilterLogic;
   pagination?: DataViewPaginationState;
 }
 
+export interface DataViewResult<T> {
+  items: T[];
+  totalCount: number;
+}
+
 export interface DataViewColumn<T> {
-  key: string;
+  fieldName: DataViewFieldName<T>;
   header: string;
   value: (item: T) => DataViewValue;
   sortable?: boolean;
   searchable?: boolean;
   filter?: DataViewFilterColumnConfig;
-  serverField?: string;
 }
 
 export interface DataViewCardField<T> {

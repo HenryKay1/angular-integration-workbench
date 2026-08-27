@@ -95,7 +95,21 @@ export class AppComponent {
           id: 'roles',
           label: 'Roles and permissions',
           icon: 'shield',
-          route: '/roles/new'
+          route: '/roles',
+          children: [
+            {
+              id: 'roles-list',
+              label: 'Role list',
+              icon: 'records',
+              route: '/roles'
+            },
+            {
+              id: 'roles-new',
+              label: 'Add role',
+              icon: 'form',
+              route: '/roles/new'
+            }
+          ]
         },
         {
           id: 'settings',

@@ -8,6 +8,8 @@ using AngularWorkbench.Api.Repositories.Reference;
 using AngularWorkbench.Api.Repositories.Reference.Interfaces;
 using AngularWorkbench.Api.Services.Access;
 using AngularWorkbench.Api.Services.Access.Interfaces;
+using AngularWorkbench.Api.Services.DataView;
+using AngularWorkbench.Api.Services.DataView.Interfaces;
 using AngularWorkbench.Api.Services.Organization;
 using AngularWorkbench.Api.Services.Organization.Interfaces;
 
@@ -34,6 +36,7 @@ namespace AngularWorkbench.Api.Extensions
             services.AddScoped<IPermissionService, PermissionService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IUserRoleService, UserRoleService>();
+            services.AddScoped<IDataViewProcessor, DataViewProcessor>();
 
 
             services.AddScoped<IUnitOfWork, UnitOfWork>();

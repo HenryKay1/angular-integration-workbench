@@ -1,5 +1,6 @@
 ﻿using AngularWorkbench.Api.Domain.Entities;
 using AngularWorkbench.Api.Models.DTOS.Access;
+using AngularWorkbench.Api.Models.DTOS.DataView;
 using AngularWorkbench.Api.Models.DTOS.Requests;
 using AngularWorkbench.Api.Models.Entities.Reference.Enums;
 using AngularWorkbench.Api.Repositories.Access.Interfaces;
@@ -7,6 +8,7 @@ using AngularWorkbench.Api.Repositories.Interfaces;
 using AngularWorkbench.Api.Repositories.Reference.Interfaces;
 using AngularWorkbench.Api.Repositories.Specifications;
 using AngularWorkbench.Api.Services.Access.Interfaces;
+using AngularWorkbench.Api.Services.DataView.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -14,21 +16,31 @@ namespace AngularWorkbench.Api.Services.Access
 {
     public sealed class RoleService : IRoleService
     {
+        private static readonly IReadOnlyList<string> DefaultRoleSearchFields =
+        [
+            nameof(RoleDto.Name),
+            nameof(RoleDto.Description),
+            nameof(RoleDto.CompanyScopeName)
+        ];
+
         private readonly IRoleRepository _roleRepository;
         private readonly IPermissionRepository _permissionRepository;
         private readonly ILookupRepository _lookupRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IDataViewProcessor _dataViewProcessor;
 
         public RoleService(
             IRoleRepository roleRepository,
             IPermissionRepository permissionRepository,
             ILookupRepository lookupRepository,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            IDataViewProcessor dataViewProcessor)
         {
             _roleRepository = roleRepository;
             _permissionRepository = permissionRepository;
             _lookupRepository = lookupRepository;
             _unitOfWork = unitOfWork;
+            _dataViewProcessor = dataViewProcessor;
         }
 
         public async Task<RoleDto?> GetByIdAsync(
@@ -51,6 +63,19 @@ namespace AngularWorkbench.Api.Services.Access
 
             return await _roleRepository.FirstOrDefaultAsync(
                 specification,
+                cancellationToken);
+        }
+
+        public async Task<DataViewResultDto<RoleDto>> GetRolesDataViewAsync(
+            DataViewRequestDto request,
+            CancellationToken cancellationToken = default)
+        {
+            var query = _roleRepository.GetRolesDataViewQuery();
+            var dataViewRequest = EnsureRoleSearchFields(request);
+
+            return await _dataViewProcessor.ProcessAsync(
+                query,
+                dataViewRequest,
                 cancellationToken);
         }
 
@@ -177,6 +202,27 @@ namespace AngularWorkbench.Api.Services.Access
             {
                 IsValid = isUnique,
                 Message = isUnique ? null : "Role name must be unique."
+            };
+        }
+
+        private static DataViewRequestDto EnsureRoleSearchFields(
+            DataViewRequestDto request)
+        {
+            if (
+                string.IsNullOrWhiteSpace(request.SearchTerm) ||
+                request.SearchFields.Count > 0)
+            {
+                return request;
+            }
+
+            return new DataViewRequestDto
+            {
+                SearchTerm = request.SearchTerm,
+                SearchFields = DefaultRoleSearchFields,
+                Sort = request.Sort,
+                Filters = request.Filters,
+                FilterLogic = request.FilterLogic,
+                Pagination = request.Pagination
             };
         }
 

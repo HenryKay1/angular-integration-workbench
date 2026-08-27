@@ -27,24 +27,22 @@ export class RecordListPageComponent {
 
   protected readonly columns: DataViewColumn<RecordItem>[] = [
     {
-      key: 'title',
+      fieldName: 'title',
       header: 'Title',
       value: (record) => record.title,
       sortable: true,
       searchable: true,
-      serverField: 'title',
       filter: {
         valueType: 'string',
         controlType: 'input'
       }
     },
     {
-      key: 'status',
+      fieldName: 'status',
       header: 'Status',
       value: (record) => record.status,
       sortable: true,
       searchable: true,
-      serverField: 'status',
       filter: {
         valueType: 'string',
         controlType: 'select',
@@ -57,35 +55,32 @@ export class RecordListPageComponent {
       }
     },
     {
-      key: 'owner',
+      fieldName: 'owner',
       header: 'Owner',
       value: (record) => record.owner,
       sortable: true,
       searchable: true,
-      serverField: 'owner',
       filter: {
         valueType: 'string',
         controlType: 'input'
       }
     },
     {
-      key: 'category',
+      fieldName: 'category',
       header: 'Category',
       value: (record) => record.category,
       sortable: true,
       searchable: true,
-      serverField: 'category',
       filter: {
         valueType: 'string',
         controlType: 'input'
       }
     },
     {
-      key: 'updated',
+      fieldName: 'updatedAt',
       header: 'Updated',
       value: (record) => new Date(record.updatedAt),
       sortable: true,
-      serverField: 'updatedAt',
       filter: {
         valueType: 'date',
         controlType: 'input'

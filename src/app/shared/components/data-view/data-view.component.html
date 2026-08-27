@@ -46,11 +46,11 @@
     </div>
 
     <ng-container *ngIf="!isLoading">
-      <div *ngIf="filteredItems.length === 0" class="data-view__state">
+      <div *ngIf="!hasDisplayItems" class="data-view__state">
         {{ hasActiveQuery ? noResultsMessage : emptyMessage }}
       </div>
 
-      <ng-container *ngIf="filteredItems.length > 0">
+      <ng-container *ngIf="hasDisplayItems">
         <div *ngIf="selectedViewMode === 'grid'" class="data-view__grid">
           <article
             *ngFor="let item of processedItems"
@@ -155,7 +155,7 @@
         >
           <div class="data-view__pagination-report">
             <p class="data-view__pagination-summary">
-              Showing {{ pageStartItem }}-{{ pageEndItem }} out of {{ filteredItems.length }}
+              Showing {{ pageStartItem }}-{{ pageEndItem }} out of {{ displayItemCount }}
             </p>
           </div>
 
@@ -297,7 +297,7 @@
             class="data-view__filter-row data-view__filter-row--active"
           >
             <ng-container *ngIf="editingFilterId === filter.id; else readonlyFilter">
-              <span>{{ getColumnHeader(filter.columnKey) }}</span>
+              <span>{{ getColumnHeader(filter.fieldName) }}</span>
 
               <label>
                 <span class="data-view__sr-only">Filter expression</span>
@@ -375,7 +375,7 @@
             </ng-container>
 
             <ng-template #readonlyFilter>
-              <span>{{ getColumnHeader(filter.columnKey) }}</span>
+              <span>{{ getColumnHeader(filter.fieldName) }}</span>
               <span>{{ getOperatorLabel(filter.operator) }}</span>
               <span>{{ formatFilterValue(filter.value) }}</span>
               <div class="data-view__filter-actions">
@@ -426,13 +426,13 @@
             <label>
               <span class="data-view__sr-only">Filter column</span>
               <select
-                [ngModel]="filterDraft.columnKey ?? ''"
+                [ngModel]="filterDraft.fieldName ?? ''"
                 (ngModelChange)="handleDraftColumnChange($event)"
               >
                 <option value="">Column</option>
                 <option
                   *ngFor="let column of filterableColumns"
-                  [value]="column.key"
+                  [value]="column.fieldName"
                 >
                   {{ column.header }}
                 </option>
@@ -578,3 +578,4 @@
     </div>
   </ng-container>
 </section>
+
