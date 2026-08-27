@@ -11,6 +11,13 @@
       flex-wrap: wrap;
     }
 
+    .data-view__toolbar-actions {
+      display: inline-flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
     .data-view__search {
       display: grid;
       gap: 0.4rem;
@@ -53,12 +60,47 @@
       box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
     }
 
+    .data-view__filter-button {
+      min-height: 2.45rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.55rem 0.9rem;
+      border: 1px solid #bcccdc;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #102a43;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+    }
+
+    .data-view__filter-count {
+      min-width: 1.35rem;
+      height: 1.35rem;
+      display: inline-grid;
+      place-items: center;
+      padding: 0 0.35rem;
+      border-radius: 999px;
+      background: #0f766e;
+      color: #ffffff;
+      font-size: 0.75rem;
+      line-height: 1;
+    }
+
     .data-view__state {
       padding: 1rem 1.25rem;
       border-radius: 0.75rem;
       border: 1px dashed #bcccdc;
       background: #f8fafc;
       color: #52606d;
+    }
+
+    .data-view__state--error {
+      border-color: #f2b8b5;
+      background: #fff5f5;
+      color: #b42318;
+      font-weight: 700;
     }
 
     .data-view__grid {
@@ -176,6 +218,140 @@
       border-bottom: 0;
     }
 
+    .data-view__pagination {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: center;
+      width: 100%;
+      padding: 0.75rem 0.9rem;
+      border: 1px solid #e5edf5;
+      border-radius: 0.75rem;
+      background: #f8fafc;
+      color: #334e68;
+    }
+
+    .data-view__pagination-report {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+
+    .data-view__pagination-summary {
+      margin: 0;
+      color: #334e68;
+      font-size: 0.85rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .data-view__pagination-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .data-view__pagination-pages {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .data-view__pagination-field {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: #334e68;
+      font-size: 0.78rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .data-view__pagination-field input {
+      width: 3.8rem;
+      min-height: 2rem;
+      padding: 0.4rem 0.5rem;
+      border: 1px solid #d9e2ec;
+      border-radius: 0.4rem;
+      background: #ffffff;
+      color: #102a43;
+      font: inherit;
+      font-weight: 600;
+    }
+
+    .data-view__pagination-field--page input {
+      width: 4.25rem;
+    }
+
+    .data-view__pagination-button,
+    .data-view__pagination-page {
+      min-width: 2rem;
+      height: 2rem;
+      display: inline-grid;
+      place-items: center;
+      padding: 0 0.55rem;
+      border: 1px solid #e5edf5;
+      border-radius: 0.45rem;
+      background: #ffffff;
+      color: #102a43;
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.8rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .data-view__pagination-button--text {
+      display: inline-flex;
+      gap: 0.3rem;
+      align-items: center;
+      border-color: transparent;
+      color: #334e68;
+    }
+
+    .data-view__pagination-button--fast {
+      color: #6d28d9;
+    }
+
+    .data-view__pagination-page--active {
+      border-color: #6d28d9;
+      background: #6d28d9;
+      color: #ffffff;
+      box-shadow: 0 8px 18px rgba(109, 40, 217, 0.22);
+    }
+
+    .data-view__pagination-button:hover,
+    .data-view__pagination-button:focus-visible,
+    .data-view__pagination-page:hover,
+    .data-view__pagination-page:focus-visible {
+      border-color: #8b5cf6;
+      background: #f8fafc;
+      color: #4c1d95;
+    }
+
+    .data-view__pagination-page--active:hover,
+    .data-view__pagination-page--active:focus-visible {
+      background: #5b21b6;
+      color: #ffffff;
+    }
+
+    .data-view__pagination-button:disabled,
+    .data-view__pagination-page:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .data-view__pagination-page:disabled {
+      border-color: transparent;
+      background: transparent;
+      color: #627d98;
+      opacity: 1;
+    }
+
     .data-view__expander-header,
     .data-view__expander-cell {
       width: 1%;
@@ -239,16 +415,27 @@
       box-shadow: 0 30px 80px rgba(15, 23, 42, 0.24);
     }
 
+    .data-view__modal--filters {
+      width: min(100%, 58rem);
+      display: grid;
+      gap: 1rem;
+    }
+
     .data-view__modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 1rem;
-      margin-bottom: 1rem;
     }
 
     .data-view__modal-header h3 {
       margin: 0;
+    }
+
+    .data-view__modal-subtitle {
+      margin: 0.2rem 0 0;
+      color: #627d98;
+      font-size: 0.9rem;
     }
 
     .data-view__modal-close {
@@ -258,6 +445,235 @@
       cursor: pointer;
       font: inherit;
       font-weight: 600;
+    }
+
+    .data-view__filter-logic {
+      display: flex;
+      gap: 0.85rem;
+      align-items: center;
+      flex-wrap: wrap;
+      padding: 0.75rem;
+      border: 1px solid #e5edf5;
+      border-radius: 0.75rem;
+      background: #f8fafc;
+      color: #334e68;
+      font-weight: 600;
+    }
+
+    .data-view__filter-logic button {
+      display: inline-flex;
+      align-items: center;
+      min-height: 2rem;
+      padding: 0.35rem 0.7rem;
+      border: 1px solid #bcccdc;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #334e68;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+    }
+
+    .data-view__filter-logic-option--active {
+      border-color: #0f766e !important;
+      background: #e6fffa !important;
+      color: #0f766e !important;
+    }
+
+    .data-view__filters {
+      display: grid;
+      gap: 0.5rem;
+      max-height: 56vh;
+      overflow: auto;
+    }
+
+    .data-view__filter-head,
+    .data-view__filter-row {
+      display: grid;
+      grid-template-columns: minmax(9rem, 1fr) minmax(10rem, 1fr) minmax(10rem, 1.25fr) 5.75rem;
+      column-gap: 1rem;
+      row-gap: 0.75rem;
+      align-items: center;
+    }
+
+    .data-view__filter-head {
+      padding: 0 0.75rem;
+      color: #627d98;
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .data-view__filter-row {
+      padding: 0.75rem;
+      border: 1px solid #e5edf5;
+      border-radius: 0.75rem;
+      background: #ffffff;
+    }
+
+    .data-view__filter-row--active {
+      color: #334e68;
+    }
+
+    .data-view__filter-row--draft {
+      background: #f8fafc;
+    }
+
+    .data-view__filter-row label {
+      display: grid;
+    }
+
+    .data-view__filter-row select,
+    .data-view__filter-row input {
+      width: 85%;
+      min-height: 2.35rem;
+      padding: 0.55rem 0.7rem;
+      border: 1px solid #bcccdc;
+      border-radius: 0.55rem;
+      background: #ffffff;
+      color: #102a43;
+      font: inherit;
+    }
+
+    .data-view__filter-row select[multiple] {
+      min-height: 5rem;
+    }
+
+    .data-view__filter-action,
+    .data-view__filter-add,
+    .data-view__filter-edit,
+    .data-view__filter-save {
+      display: inline-grid;
+      place-items: center;
+      justify-self: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      padding: 0;
+      border-radius: 50%;
+      cursor: pointer;
+      transition:
+        background-color 0.16s ease,
+        border-color 0.16s ease,
+        color 0.16s ease,
+        transform 0.16s ease;
+    }
+
+    .data-view__filter-action svg,
+    .data-view__filter-add svg,
+    .data-view__filter-edit svg,
+    .data-view__filter-save svg {
+      width: 1.1rem;
+      height: 1.1rem;
+    }
+
+    .data-view__filter-actions {
+      display: inline-flex;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+
+    .data-view__filter-action {
+      border: 1px solid #f2b8b5;
+      background: #ffffff;
+      color: #b42318;
+    }
+
+    .data-view__filter-edit {
+      border: 1px solid #bcccdc;
+      background: #ffffff;
+      color: #334e68;
+    }
+
+    .data-view__filter-action:hover,
+    .data-view__filter-action:focus-visible {
+      border-color: #b42318;
+      background: #fff5f5;
+      transform: translateY(-1px);
+    }
+
+    .data-view__filter-action:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .data-view__filter-add,
+    .data-view__filter-save {
+      border: 1px solid #0f766e;
+      background: #0f766e;
+      color: #ffffff;
+    }
+
+    .data-view__filter-edit:hover,
+    .data-view__filter-edit:focus-visible {
+      border-color: #486581;
+      background: #f8fafc;
+      transform: translateY(-1px);
+    }
+
+    .data-view__filter-add:hover,
+    .data-view__filter-add:focus-visible,
+    .data-view__filter-save:hover,
+    .data-view__filter-save:focus-visible {
+      border-color: #0b5f59;
+      background: #0b5f59;
+      transform: translateY(-1px);
+    }
+
+    .data-view__filter-error {
+      margin: 0;
+      padding: 0.65rem 0.75rem;
+      border: 1px solid #f2b8b5;
+      border-radius: 0.65rem;
+      background: #fff5f5;
+      color: #b42318;
+      font-weight: 700;
+    }
+
+    .data-view__filter-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .data-view__filter-footer-button {
+      min-height: 2.35rem;
+      padding: 0.5rem 0.85rem;
+      border-radius: 999px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .data-view__filter-footer-button--secondary {
+      border: 1px solid #bcccdc;
+      background: #ffffff;
+      color: #334e68;
+    }
+
+    .data-view__filter-footer-button--secondary:hover,
+    .data-view__filter-footer-button--secondary:focus-visible {
+      border-color: #486581;
+      background: #f8fafc;
+    }
+
+    .data-view__filter-footer-button--primary {
+      border: 1px solid #0f766e;
+      background: #0f766e;
+      color: #ffffff;
+    }
+
+    .data-view__filter-footer-button--primary:hover,
+    .data-view__filter-footer-button--primary:focus-visible {
+      border-color: #0b5f59;
+      background: #0b5f59;
+    }
+
+    .data-view__filter-footer-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
     }
 
     .data-view__sr-only {
@@ -270,4 +686,66 @@
       clip: rect(0, 0, 0, 0);
       white-space: nowrap;
       border: 0;
+    }
+
+    @media (max-width: 720px) {
+      .data-view__toolbar,
+      .data-view__toolbar-actions {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .data-view__modes,
+      .data-view__filter-button {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .data-view__pagination,
+      .data-view__pagination-report,
+      .data-view__pagination-controls {
+        align-items: stretch;
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .data-view__pagination-controls,
+      .data-view__pagination-report,
+      .data-view__pagination-field,
+      .data-view__pagination-pages,
+      .data-view__pagination-field input {
+        width: 100%;
+      }
+
+      .data-view__pagination-pages {
+        justify-content: center;
+      }
+
+      .data-view__pagination-field {
+        justify-content: space-between;
+      }
+
+      .data-view__pagination-summary {
+        white-space: normal;
+      }
+
+      .data-view__pagination-button {
+        width: 100%;
+      }
+
+      .data-view__filter-head {
+        display: none;
+      }
+
+      .data-view__filter-row {
+        grid-template-columns: 1fr;
+      }
+
+      .data-view__filter-action,
+      .data-view__filter-add,
+      .data-view__filter-edit,
+      .data-view__filter-save,
+      .data-view__filter-actions {
+        justify-self: end;
+      }
     }

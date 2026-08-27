@@ -62,5 +62,805 @@
       "transformationVersion": "v2.4",
       "retentionDays": 90
     }
+  },
+  {
+    "id": "rec-1005",
+    "title": "Partner Eligibility Feed",
+    "status": "Active",
+    "owner": "Partner Operations",
+    "category": "Partner Data",
+    "createdAt": "2026-03-21T09:00:00Z",
+    "updatedAt": "2026-03-22T10:15:00Z",
+    "summary": "Publishes partner eligibility changes to downstream enrollment systems.",
+    "currentPayload": {
+      "sourceSystem": "Partner Portal",
+      "targetSystem": "Enrollment API",
+      "syncMode": "Hourly",
+      "priority": "Medium"
+    }
+  },
+  {
+    "id": "rec-1006",
+    "title": "Inventory Reconciliation Stream",
+    "status": "Draft",
+    "owner": "Supply Chain Integrations",
+    "category": "Inventory",
+    "createdAt": "2026-03-22T13:20:00Z",
+    "updatedAt": "2026-03-24T15:45:00Z",
+    "summary": "Compares warehouse inventory snapshots with commerce availability records.",
+    "currentPayload": {
+      "sourceSystem": "Warehouse Hub",
+      "targetSystem": "Commerce API",
+      "syncMode": "Batch",
+      "priority": "High"
+    }
+  },
+  {
+    "id": "rec-1007",
+    "title": "Shipment Status Webhook",
+    "status": "Active",
+    "owner": "Logistics Platform",
+    "category": "Fulfillment",
+    "createdAt": "2026-03-23T08:40:00Z",
+    "updatedAt": "2026-03-25T09:05:00Z",
+    "summary": "Receives carrier shipment status events and enriches customer order timelines.",
+    "currentPayload": {
+      "sourceSystem": "Carrier Gateway",
+      "targetSystem": "Order Timeline Service",
+      "syncMode": "Event-driven",
+      "priority": "High"
+    }
+  },
+  {
+    "id": "rec-1008",
+    "title": "Payment Settlement Export",
+    "status": "Archived",
+    "owner": "Finance Integrations",
+    "category": "Payments",
+    "createdAt": "2026-01-16T11:00:00Z",
+    "updatedAt": "2026-02-18T18:30:00Z",
+    "summary": "Exports settled payment records to the enterprise ledger.",
+    "currentPayload": {
+      "sourceSystem": "Payment Processor",
+      "targetSystem": "General Ledger",
+      "fileFormat": "CSV",
+      "retentionDays": 120
+    }
+  },
+  {
+    "id": "rec-1009",
+    "title": "Subscription Renewal Sync",
+    "status": "Active",
+    "owner": "Revenue Operations",
+    "category": "Subscriptions",
+    "createdAt": "2026-03-24T10:10:00Z",
+    "updatedAt": "2026-03-26T12:25:00Z",
+    "summary": "Synchronizes renewal dates and contract changes with billing workflows.",
+    "currentPayload": {
+      "sourceSystem": "CRM",
+      "targetSystem": "Billing Engine",
+      "syncMode": "Near real-time",
+      "priority": "Medium"
+    }
+  },
+  {
+    "id": "rec-1010",
+    "title": "Support Case Escalation Bridge",
+    "status": "Draft",
+    "owner": "Customer Support",
+    "category": "Service",
+    "createdAt": "2026-03-25T14:35:00Z",
+    "updatedAt": "2026-03-27T16:00:00Z",
+    "summary": "Routes high-severity support cases into incident response channels.",
+    "currentPayload": {
+      "sourceSystem": "Service Cloud",
+      "targetSystem": "Incident Hub",
+      "routingRule": "Severity >= 2",
+      "priority": "High"
+    }
+  },
+  {
+    "id": "rec-1011",
+    "title": "Product Catalog Publish",
+    "status": "Active",
+    "owner": "Commerce Platform",
+    "category": "Catalog",
+    "createdAt": "2026-03-26T07:55:00Z",
+    "updatedAt": "2026-03-28T08:45:00Z",
+    "summary": "Publishes approved product catalog updates to storefront and marketplace channels.",
+    "currentPayload": {
+      "sourceSystem": "PIM",
+      "targetSystem": "Storefront API",
+      "syncMode": "Scheduled",
+      "priority": "Medium"
+    }
+  },
+  {
+    "id": "rec-1012",
+    "title": "Vendor Onboarding Checklist",
+    "status": "Active",
+    "owner": "Procurement",
+    "category": "Vendor Management",
+    "createdAt": "2026-03-27T12:05:00Z",
+    "updatedAt": "2026-03-29T14:20:00Z",
+    "summary": "Creates vendor onboarding tasks after supplier profile approval.",
+    "currentPayload": {
+      "sourceSystem": "Supplier Portal",
+      "targetSystem": "Task Orchestrator",
+      "requiresApproval": true,
+      "priority": "Low"
+    }
+  },
+  {
+    "id": "rec-1013",
+    "title": "Employee Badge Deactivation",
+    "status": "Archived",
+    "owner": "Identity Services",
+    "category": "Security",
+    "createdAt": "2026-01-28T09:15:00Z",
+    "updatedAt": "2026-02-22T10:05:00Z",
+    "summary": "Disables physical access badges when employee termination events arrive.",
+    "currentPayload": {
+      "sourceSystem": "HRIS",
+      "targetSystem": "Badge Access System",
+      "syncMode": "Event-driven",
+      "requiresApproval": false
+    }
+  },
+  {
+    "id": "rec-1014",
+    "title": "Marketing Consent Snapshot",
+    "status": "Draft",
+    "owner": "Marketing Operations",
+    "category": "Compliance",
+    "createdAt": "2026-03-28T15:30:00Z",
+    "updatedAt": "2026-03-30T17:10:00Z",
+    "summary": "Sends consent preference snapshots to campaign activation platforms.",
+    "currentPayload": {
+      "sourceSystem": "Preference Center",
+      "targetSystem": "Campaign Platform",
+      "fileFormat": "JSON",
+      "priority": "Medium"
+    }
+  },
+  {
+    "id": "rec-1015",
+    "title": "Loyalty Points Accrual",
+    "status": "Active",
+    "owner": "Customer Experience",
+    "category": "Loyalty",
+    "createdAt": "2026-03-29T08:50:00Z",
+    "updatedAt": "2026-03-31T09:40:00Z",
+    "summary": "Posts eligible purchase activity to loyalty points accounts.",
+    "currentPayload": {
+      "sourceSystem": "Order Service",
+      "targetSystem": "Loyalty API",
+      "syncMode": "Near real-time",
+      "priority": "High"
+    }
+  },
+  {
+    "id": "rec-1016",
+    "title": "Tax Jurisdiction Lookup",
+    "status": "Active",
+    "owner": "Finance Integrations",
+    "category": "Tax",
+    "createdAt": "2026-03-30T10:00:00Z",
+    "updatedAt": "2026-04-01T11:30:00Z",
+    "summary": "Enriches checkout requests with jurisdiction and tax calculation metadata.",
+    "currentPayload": {
+      "sourceSystem": "Checkout API",
+      "targetSystem": "Tax Provider",
+      "syncMode": "Request-response",
+      "priority": "High"
+    }
+  },
+  {
+    "id": "rec-1017",
+    "title": "Returns Authorization Intake",
+    "status": "Draft",
+    "owner": "Reverse Logistics",
+    "category": "Returns",
+    "createdAt": "2026-03-31T13:45:00Z",
+    "updatedAt": "2026-04-02T15:05:00Z",
+    "summary": "Captures return authorization requests and creates reverse shipment workflows.",
+    "currentPayload": {
+      "sourceSystem": "Returns Portal",
+      "targetSystem": "Logistics Workflow API",
+      "syncMode": "Event-driven",
+      "priority": "Medium"
+    }
+  },
+  {
+    "id": "rec-1018",
+    "title": "Risk Score Refresh",
+    "status": "Active",
+    "owner": "Risk Analytics",
+    "category": "Risk",
+    "createdAt": "2026-04-01T09:25:00Z",
+    "updatedAt": "2026-04-03T10:50:00Z",
+    "summary": "Refreshes account risk scores using overnight analytics model outputs.",
+    "currentPayload": {
+      "sourceSystem": "Analytics Lake",
+      "targetSystem": "Risk Decisioning",
+      "schedule": "0 15 2 * * ?",
+      "priority": "Medium"
+    }
+  },
+  {
+    "id": "rec-1019",
+    "title": "Fraud Alert Dispatch",
+    "status": "Archived",
+    "owner": "Risk Operations",
+    "category": "Fraud",
+    "createdAt": "2026-01-07T08:35:00Z",
+    "updatedAt": "2026-02-14T13:10:00Z",
+    "summary": "Dispatches fraud review alerts to queue management after suspicious activity detection.",
+    "currentPayload": {
+      "sourceSystem": "Fraud Engine",
+      "targetSystem": "Review Queue",
+      "routingRule": "RiskScore >= 85",
+      "retentionDays": 180
+    }
+  },
+  {
+    "id": "rec-1020",
+    "title": "Warehouse Transfer Notice",
+    "status": "Active",
+    "owner": "Supply Chain Integrations",
+    "category": "Inventory",
+    "createdAt": "2026-04-02T12:15:00Z",
+    "updatedAt": "2026-04-04T14:40:00Z",
+    "summary": "Creates inventory transfer notices between regional distribution centers.",
+    "currentPayload": {
+      "sourceSystem": "Warehouse Hub",
+      "targetSystem": "Inventory Planner",
+      "fileFormat": "JSON",
+      "priority": "Medium"
+    }
+  },
+  {
+    "id": "rec-1021",
+    "title": "Contract Approval Listener",
+    "status": "Draft",
+    "owner": "Legal Operations",
+    "category": "Contracts",
+    "createdAt": "2026-04-03T09:05:00Z",
+    "updatedAt": "2026-04-05T11:25:00Z",
+    "summary": "Listens for contract approval events and updates the customer account workspace.",
+    "currentPayload": {
+      "sourceSystem": "CLM",
+      "targetSystem": "CRM",
+      "syncMode": "Event-driven",
+      "requiresApproval": false
+    }
+  },
+  {
+    "id": "rec-1022",
+    "title": "Customer Health Rollup",
+    "status": "Active",
+    "owner": "Customer Success",
+    "category": "Customer Data",
+    "createdAt": "2026-04-04T07:45:00Z",
+    "updatedAt": "2026-04-06T08:35:00Z",
+    "summary": "Aggregates usage, support, and renewal signals into customer health scores.",
+    "currentPayload": {
+      "sourceSystem": "Data Warehouse",
+      "targetSystem": "Customer 360",
+      "schedule": "0 0 6 * * ?",
+      "priority": "Medium"
+    }
+  },
+  {
+    "id": "rec-1023",
+    "title": "Account Territory Assignment",
+    "status": "Active",
+    "owner": "Sales Operations",
+    "category": "Sales",
+    "createdAt": "2026-04-05T10:35:00Z",
+    "updatedAt": "2026-04-07T12:55:00Z",
+    "summary": "Assigns accounts to sales territories after planning hierarchy updates.",
+    "currentPayload": {
+      "sourceSystem": "Territory Planner",
+      "targetSystem": "CRM",
+      "syncMode": "Batch",
+      "priority": "Medium"
+    }
+  },
+  {
+    "id": "rec-1024",
+    "title": "Quote Price Validation",
+    "status": "Draft",
+    "owner": "Revenue Operations",
+    "category": "Pricing",
+    "createdAt": "2026-04-06T13:10:00Z",
+    "updatedAt": "2026-04-08T15:20:00Z",
+    "summary": "Validates quote line pricing against approved discount and product rules.",
+    "currentPayload": {
+      "sourceSystem": "CPQ",
+      "targetSystem": "Pricing Service",
+      "syncMode": "Request-response",
+      "priority": "High"
+    }
+  },
+  {
+    "id": "rec-1025",
+    "title": "Data Quality Exception Queue",
+    "status": "Active",
+    "owner": "Data Governance",
+    "category": "Quality",
+    "createdAt": "2026-04-07T08:25:00Z",
+    "updatedAt": "2026-04-09T09:35:00Z",
+    "summary": "Creates remediation tasks when master data quality checks fail.",
+    "currentPayload": {
+      "sourceSystem": "MDM",
+      "targetSystem": "Remediation Queue",
+      "routingRule": "Severity in Critical, High",
+      "priority": "High"
+    }
+  },
+  {
+    "id": "rec-1026",
+    "title": "Fleet Maintenance Sync",
+    "status": "Archived",
+    "owner": "Field Operations",
+    "category": "Fleet",
+    "createdAt": "2026-01-22T11:55:00Z",
+    "updatedAt": "2026-02-24T13:15:00Z",
+    "summary": "Synchronizes vehicle maintenance records into operational planning dashboards.",
+    "currentPayload": {
+      "sourceSystem": "Fleet Manager",
+      "targetSystem": "Operations Dashboard",
+      "fileFormat": "JSON",
+      "retentionDays": 365
+    }
+  },
+  {
+    "id": "rec-1027",
+    "title": "Service Appointment Scheduler",
+    "status": "Active",
+    "owner": "Field Operations",
+    "category": "Scheduling",
+    "createdAt": "2026-04-08T12:45:00Z",
+    "updatedAt": "2026-04-10T14:10:00Z",
+    "summary": "Creates service appointments after eligible work orders are approved.",
+    "currentPayload": {
+      "sourceSystem": "Work Order System",
+      "targetSystem": "Scheduler API",
+      "syncMode": "Event-driven",
+      "priority": "Medium"
+    }
+  },
+  {
+    "id": "rec-1028",
+    "title": "Asset Warranty Lookup",
+    "status": "Draft",
+    "owner": "Service Platform",
+    "category": "Warranty",
+    "createdAt": "2026-04-09T07:30:00Z",
+    "updatedAt": "2026-04-11T08:50:00Z",
+    "summary": "Checks warranty eligibility before service entitlements are created.",
+    "currentPayload": {
+      "sourceSystem": "Asset Registry",
+      "targetSystem": "Warranty Provider",
+      "syncMode": "Request-response",
+      "priority": "Medium"
+    }
+  },
+  {
+    "id": "rec-1029",
+    "title": "Learning Completion Export",
+    "status": "Active",
+    "owner": "People Systems",
+    "category": "Training",
+    "createdAt": "2026-04-10T09:40:00Z",
+    "updatedAt": "2026-04-12T10:25:00Z",
+    "summary": "Exports learning completion records to compliance reporting systems.",
+    "currentPayload": {
+      "sourceSystem": "LMS",
+      "targetSystem": "Compliance Warehouse",
+      "schedule": "0 30 1 * * ?",
+      "priority": "Low"
+    }
+  },
+  {
+    "id": "rec-1030",
+    "title": "Payroll Deduction Feed",
+    "status": "Active",
+    "owner": "People Systems",
+    "category": "Payroll",
+    "createdAt": "2026-04-11T11:15:00Z",
+    "updatedAt": "2026-04-13T12:45:00Z",
+    "summary": "Sends benefit deduction updates into payroll processing.",
+    "currentPayload": {
+      "sourceSystem": "Benefits Platform",
+      "targetSystem": "Payroll Engine",
+      "fileFormat": "CSV",
+      "priority": "High"
+    }
+  },
+  {
+    "id": "rec-1031",
+    "title": "Credential Expiration Monitor",
+    "status": "Draft",
+    "owner": "Security Operations",
+    "category": "Security",
+    "createdAt": "2026-04-12T08:05:00Z",
+    "updatedAt": "2026-04-14T09:30:00Z",
+    "summary": "Flags expiring integration credentials before runtime authentication failures occur.",
+    "currentPayload": {
+      "sourceSystem": "Secrets Vault",
+      "targetSystem": "Notification Service",
+      "schedule": "0 0 8 * * ?",
+      "priority": "High"
+    }
+  },
+  {
+    "id": "rec-1032",
+    "title": "Audit Event Archive",
+    "status": "Archived",
+    "owner": "Security Operations",
+    "category": "Audit",
+    "createdAt": "2026-01-31T10:20:00Z",
+    "updatedAt": "2026-02-28T11:40:00Z",
+    "summary": "Archives normalized audit events into long-term compliance storage.",
+    "currentPayload": {
+      "sourceSystem": "Audit Stream",
+      "targetSystem": "Compliance Archive",
+      "fileFormat": "Parquet",
+      "retentionDays": 2555
+    }
+  },
+  {
+    "id": "rec-1033",
+    "title": "Order Cancellation Broadcast",
+    "status": "Active",
+    "owner": "Commerce Platform",
+    "category": "Orders",
+    "createdAt": "2026-04-13T13:25:00Z",
+    "updatedAt": "2026-04-15T14:35:00Z",
+    "summary": "Broadcasts order cancellation events to inventory, fulfillment, and support systems.",
+    "currentPayload": {
+      "sourceSystem": "Order Service",
+      "targetSystem": "Event Bus",
+      "syncMode": "Event-driven",
+      "priority": "High"
+    }
+  },
+  {
+    "id": "rec-1034",
+    "title": "Promotion Code Import",
+    "status": "Draft",
+    "owner": "Marketing Operations",
+    "category": "Promotions",
+    "createdAt": "2026-04-14T07:50:00Z",
+    "updatedAt": "2026-04-16T09:15:00Z",
+    "summary": "Imports approved promotion code batches into the commerce platform.",
+    "currentPayload": {
+      "sourceSystem": "Campaign Platform",
+      "targetSystem": "Promotion Service",
+      "fileFormat": "CSV",
+      "priority": "Medium"
+    }
+  },
+  {
+    "id": "rec-1035",
+    "title": "Contact Center Transcript Load",
+    "status": "Active",
+    "owner": "Customer Support",
+    "category": "Service",
+    "createdAt": "2026-04-15T10:30:00Z",
+    "updatedAt": "2026-04-17T12:20:00Z",
+    "summary": "Loads support transcripts into analytics storage for quality review.",
+    "currentPayload": {
+      "sourceSystem": "Contact Center",
+      "targetSystem": "Analytics Lake",
+      "schedule": "0 0/15 * * * ?",
+      "priority": "Low"
+    }
+  },
+  {
+    "id": "rec-1036",
+    "title": "Warranty Claim Submission",
+    "status": "Active",
+    "owner": "Claims Automation",
+    "category": "Warranty",
+    "createdAt": "2026-04-16T11:35:00Z",
+    "updatedAt": "2026-04-18T13:05:00Z",
+    "summary": "Submits validated warranty claims to manufacturer adjudication services.",
+    "currentPayload": {
+      "sourceSystem": "Claims Portal",
+      "targetSystem": "Manufacturer API",
+      "syncMode": "Request-response",
+      "priority": "Medium"
+    }
+  },
+  {
+    "id": "rec-1037",
+    "title": "Forecast Demand Upload",
+    "status": "Draft",
+    "owner": "Planning Analytics",
+    "category": "Forecasting",
+    "createdAt": "2026-04-17T08:45:00Z",
+    "updatedAt": "2026-04-19T10:10:00Z",
+    "summary": "Uploads demand forecast outputs into supply planning applications.",
+    "currentPayload": {
+      "sourceSystem": "Forecast Model",
+      "targetSystem": "Supply Planner",
+      "fileFormat": "JSON",
+      "priority": "Medium"
+    }
+  },
+  {
+    "id": "rec-1038",
+    "title": "Manufacturing Yield Metrics",
+    "status": "Archived",
+    "owner": "Manufacturing Systems",
+    "category": "Manufacturing",
+    "createdAt": "2026-02-04T09:55:00Z",
+    "updatedAt": "2026-03-03T11:30:00Z",
+    "summary": "Publishes line yield and defect metrics to operational analytics dashboards.",
+    "currentPayload": {
+      "sourceSystem": "MES",
+      "targetSystem": "Operations Analytics",
+      "schedule": "0 0/10 * * * ?",
+      "retentionDays": 365
+    }
+  },
+  {
+    "id": "rec-1039",
+    "title": "Quality Hold Release",
+    "status": "Active",
+    "owner": "Quality Engineering",
+    "category": "Quality",
+    "createdAt": "2026-04-18T12:00:00Z",
+    "updatedAt": "2026-04-20T13:45:00Z",
+    "summary": "Releases inventory lots from quality hold after inspection approval.",
+    "currentPayload": {
+      "sourceSystem": "Quality Management",
+      "targetSystem": "Warehouse Hub",
+      "syncMode": "Event-driven",
+      "priority": "High"
+    }
+  },
+  {
+    "id": "rec-1040",
+    "title": "Expense Receipt Archive",
+    "status": "Active",
+    "owner": "Finance Operations",
+    "category": "Expenses",
+    "createdAt": "2026-04-19T07:20:00Z",
+    "updatedAt": "2026-04-21T08:40:00Z",
+    "summary": "Archives approved expense receipts into document retention storage.",
+    "currentPayload": {
+      "sourceSystem": "Expense Platform",
+      "targetSystem": "Document Archive",
+      "fileFormat": "PDF",
+      "priority": "Low"
+    }
+  },
+  {
+    "id": "rec-1041",
+    "title": "Bank Account Verification",
+    "status": "Draft",
+    "owner": "Treasury Operations",
+    "category": "Payments",
+    "createdAt": "2026-04-20T10:05:00Z",
+    "updatedAt": "2026-04-22T11:15:00Z",
+    "summary": "Verifies supplier bank account changes before payment release.",
+    "currentPayload": {
+      "sourceSystem": "Supplier Portal",
+      "targetSystem": "Bank Verification API",
+      "requiresApproval": true,
+      "priority": "High"
+    }
+  },
+  {
+    "id": "rec-1042",
+    "title": "Treasury Cash Position",
+    "status": "Active",
+    "owner": "Treasury Operations",
+    "category": "Treasury",
+    "createdAt": "2026-04-21T13:15:00Z",
+    "updatedAt": "2026-04-23T14:25:00Z",
+    "summary": "Aggregates bank balances into a consolidated cash position dashboard.",
+    "currentPayload": {
+      "sourceSystem": "Bank Network",
+      "targetSystem": "Treasury Dashboard",
+      "schedule": "0 0 7 * * ?",
+      "priority": "High"
+    }
+  },
+  {
+    "id": "rec-1043",
+    "title": "Policy Document Distribution",
+    "status": "Archived",
+    "owner": "Compliance Office",
+    "category": "Compliance",
+    "createdAt": "2026-02-12T08:10:00Z",
+    "updatedAt": "2026-03-08T09:55:00Z",
+    "summary": "Distributes approved policy documents to employee acknowledgement systems.",
+    "currentPayload": {
+      "sourceSystem": "Policy Library",
+      "targetSystem": "Acknowledgement Portal",
+      "fileFormat": "PDF",
+      "retentionDays": 1825
+    }
+  },
+  {
+    "id": "rec-1044",
+    "title": "Regulatory Filing Package",
+    "status": "Draft",
+    "owner": "Compliance Office",
+    "category": "Regulatory",
+    "createdAt": "2026-04-22T09:30:00Z",
+    "updatedAt": "2026-04-24T10:50:00Z",
+    "summary": "Packages approved regulatory filing data for external submission.",
+    "currentPayload": {
+      "sourceSystem": "Compliance Warehouse",
+      "targetSystem": "Regulatory Gateway",
+      "fileFormat": "XML",
+      "priority": "High"
+    }
+  },
+  {
+    "id": "rec-1045",
+    "title": "Facility Sensor Telemetry",
+    "status": "Active",
+    "owner": "Facilities Engineering",
+    "category": "Facilities",
+    "createdAt": "2026-04-23T07:35:00Z",
+    "updatedAt": "2026-04-25T08:55:00Z",
+    "summary": "Streams facility sensor telemetry into monitoring and alerting services.",
+    "currentPayload": {
+      "sourceSystem": "IoT Gateway",
+      "targetSystem": "Monitoring Platform",
+      "syncMode": "Streaming",
+      "priority": "Medium"
+    }
+  },
+  {
+    "id": "rec-1046",
+    "title": "Energy Usage Rollup",
+    "status": "Active",
+    "owner": "Facilities Engineering",
+    "category": "Sustainability",
+    "createdAt": "2026-04-24T11:25:00Z",
+    "updatedAt": "2026-04-26T12:35:00Z",
+    "summary": "Rolls up energy usage metrics for sustainability reporting.",
+    "currentPayload": {
+      "sourceSystem": "Meter Network",
+      "targetSystem": "Sustainability Dashboard",
+      "schedule": "0 0 4 * * ?",
+      "priority": "Low"
+    }
+  },
+  {
+    "id": "rec-1047",
+    "title": "Mobile Device Enrollment",
+    "status": "Draft",
+    "owner": "Endpoint Services",
+    "category": "Device Management",
+    "createdAt": "2026-04-25T14:00:00Z",
+    "updatedAt": "2026-04-27T15:15:00Z",
+    "summary": "Enrolls approved mobile devices into endpoint management.",
+    "currentPayload": {
+      "sourceSystem": "Device Request Portal",
+      "targetSystem": "MDM",
+      "requiresApproval": true,
+      "priority": "Medium"
+    }
+  },
+  {
+    "id": "rec-1048",
+    "title": "Software License Harvest",
+    "status": "Active",
+    "owner": "IT Asset Management",
+    "category": "Licensing",
+    "createdAt": "2026-04-26T08:15:00Z",
+    "updatedAt": "2026-04-28T09:45:00Z",
+    "summary": "Harvests unused software licenses and updates entitlement inventory.",
+    "currentPayload": {
+      "sourceSystem": "Usage Metering",
+      "targetSystem": "License Manager",
+      "schedule": "0 45 3 * * ?",
+      "priority": "Low"
+    }
+  },
+  {
+    "id": "rec-1049",
+    "title": "Release Deployment Notice",
+    "status": "Archived",
+    "owner": "Release Management",
+    "category": "DevOps",
+    "createdAt": "2026-02-20T10:45:00Z",
+    "updatedAt": "2026-03-12T12:20:00Z",
+    "summary": "Publishes deployment notices to subscribed operational teams.",
+    "currentPayload": {
+      "sourceSystem": "Deployment Pipeline",
+      "targetSystem": "Notification Service",
+      "syncMode": "Event-driven",
+      "retentionDays": 180
+    }
+  },
+  {
+    "id": "rec-1050",
+    "title": "Incident Postmortem Export",
+    "status": "Active",
+    "owner": "Reliability Engineering",
+    "category": "DevOps",
+    "createdAt": "2026-04-27T09:50:00Z",
+    "updatedAt": "2026-04-29T11:05:00Z",
+    "summary": "Exports completed incident postmortems into the knowledge base.",
+    "currentPayload": {
+      "sourceSystem": "Incident Hub",
+      "targetSystem": "Knowledge Base",
+      "fileFormat": "Markdown",
+      "priority": "Medium"
+    }
+  },
+  {
+    "id": "rec-1051",
+    "title": "API Usage Metering",
+    "status": "Draft",
+    "owner": "Platform Operations",
+    "category": "Metering",
+    "createdAt": "2026-04-28T12:30:00Z",
+    "updatedAt": "2026-04-30T13:55:00Z",
+    "summary": "Aggregates API usage events for internal chargeback and capacity planning.",
+    "currentPayload": {
+      "sourceSystem": "API Gateway",
+      "targetSystem": "Metering Warehouse",
+      "syncMode": "Streaming",
+      "priority": "Medium"
+    }
+  },
+  {
+    "id": "rec-1052",
+    "title": "Data Lake Retention Sweep",
+    "status": "Active",
+    "owner": "Data Platform",
+    "category": "Governance",
+    "createdAt": "2026-04-29T07:40:00Z",
+    "updatedAt": "2026-05-01T08:30:00Z",
+    "summary": "Sweeps expired datasets from the data lake according to retention policy.",
+    "currentPayload": {
+      "sourceSystem": "Data Catalog",
+      "targetSystem": "Data Lake",
+      "schedule": "0 0 1 * * ?",
+      "retentionDays": 730
+    }
+  },
+  {
+    "id": "rec-1053",
+    "title": "Analytics Workspace Provisioning",
+    "status": "Active",
+    "owner": "Data Platform",
+    "category": "Analytics",
+    "createdAt": "2026-04-30T10:20:00Z",
+    "updatedAt": "2026-05-02T11:45:00Z",
+    "summary": "Provisions analytics workspaces after approved project intake requests.",
+    "currentPayload": {
+      "sourceSystem": "Project Intake",
+      "targetSystem": "Analytics Platform",
+      "requiresApproval": false,
+      "priority": "Medium"
+    }
+  },
+  {
+    "id": "rec-1054",
+    "title": "Executive KPI Snapshot",
+    "status": "Draft",
+    "owner": "Business Intelligence",
+    "category": "Analytics",
+    "createdAt": "2026-05-01T08:00:00Z",
+    "updatedAt": "2026-05-03T09:20:00Z",
+    "summary": "Publishes executive KPI snapshots to leadership reporting dashboards.",
+    "currentPayload": {
+      "sourceSystem": "Metrics Store",
+      "targetSystem": "Executive Dashboard",
+      "schedule": "0 0 7 * * MON",
+      "priority": "High"
+    }
   }
 ]

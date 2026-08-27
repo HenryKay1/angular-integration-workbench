@@ -3,11 +3,12 @@ import { Component, inject } from '@angular/core';
 import { map, startWith } from 'rxjs';
 import { RecordItem } from '../../../core/models/record.model';
 import { RecordService } from '../../../core/services/record.service';
+import { DataViewComponent } from '../../../shared/components/data-view/data-view.component';
 import {
   DataViewCardConfig,
   DataViewColumn,
-  DataViewComponent
-} from '../../../shared/components/data-view/data-view.component';
+  DataViewPaginationConfig
+} from '../../../shared/components/data-view/data-view.models';
 
 @Component({
   selector: 'aiw-record-list-page',
@@ -26,30 +27,69 @@ export class RecordListPageComponent {
 
   protected readonly columns: DataViewColumn<RecordItem>[] = [
     {
+      key: 'title',
       header: 'Title',
       value: (record) => record.title,
-      sortable: true
+      sortable: true,
+      searchable: true,
+      serverField: 'title',
+      filter: {
+        valueType: 'string',
+        controlType: 'input'
+      }
     },
     {
+      key: 'status',
       header: 'Status',
       value: (record) => record.status,
-      sortable: true
+      sortable: true,
+      searchable: true,
+      serverField: 'status',
+      filter: {
+        valueType: 'string',
+        controlType: 'select',
+        dropdownType: 'single',
+        options: [
+          { label: 'Active', value: 'Active' },
+          { label: 'Draft', value: 'Draft' },
+          { label: 'Archived', value: 'Archived' }
+        ]
+      }
     },
     {
+      key: 'owner',
       header: 'Owner',
       value: (record) => record.owner,
-      sortable: true
+      sortable: true,
+      searchable: true,
+      serverField: 'owner',
+      filter: {
+        valueType: 'string',
+        controlType: 'input'
+      }
     },
     {
+      key: 'category',
       header: 'Category',
       value: (record) => record.category,
-      sortable: true
+      sortable: true,
+      searchable: true,
+      serverField: 'category',
+      filter: {
+        valueType: 'string',
+        controlType: 'input'
+      }
     },
     {
+      key: 'updated',
       header: 'Updated',
-      value: (record) => this.formatDate(record.updatedAt),
-      sortValue: (record) => new Date(record.updatedAt).getTime(),
-      sortable: true
+      value: (record) => new Date(record.updatedAt),
+      sortable: true,
+      serverField: 'updatedAt',
+      filter: {
+        valueType: 'date',
+        controlType: 'input'
+      }
     }
   ];
 
@@ -74,6 +114,12 @@ export class RecordListPageComponent {
     '/records',
     record.id
   ];
+
+  protected readonly pagination: DataViewPaginationConfig = {
+    enabled: true,
+    defaultPageSize: 5,
+    fastStep: 5
+  };
 
   protected formatDate(value: string): string {
     return new Intl.DateTimeFormat('en-US', {

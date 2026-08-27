@@ -1,14 +1,21 @@
-    <section class="data-view">
-      <div class="data-view__toolbar">
-        <label class="data-view__search">
-          <span>Search</span>
-          <input
-            type="search"
-            [placeholder]="searchPlaceholder"
-            [(ngModel)]="searchTerm"
-          />
-        </label>
+<section class="data-view">
+  <div *ngIf="configurationError" class="data-view__state data-view__state--error">
+    {{ configurationError }}
+  </div>
 
+  <ng-container *ngIf="!configurationError">
+    <div class="data-view__toolbar">
+      <label class="data-view__search">
+        <span>Search</span>
+        <input
+          type="search"
+          [placeholder]="searchPlaceholder"
+          [ngModel]="searchTerm"
+          (ngModelChange)="handleSearchTermChange($event)"
+        />
+      </label>
+
+      <div class="data-view__toolbar-actions">
         <div *ngIf="availableViewModes.length > 1" class="data-view__modes">
           <button
             *ngFor="let mode of availableViewModes"
@@ -19,138 +26,555 @@
             {{ mode === 'grid' ? 'Grid' : 'Table' }}
           </button>
         </div>
+
+        <button
+          type="button"
+          class="data-view__filter-button"
+          [attr.aria-label]="activeFilterCount ? 'Open filters, ' + activeFilterCount + ' active' : 'Open filters'"
+          (click)="openFilterModal()"
+        >
+          <span>Filter</span>
+          <span *ngIf="activeFilterCount > 0" class="data-view__filter-count">
+            {{ activeFilterCount }}
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="isLoading" class="data-view__state">
+      {{ loadingMessage }}
+    </div>
+
+    <ng-container *ngIf="!isLoading">
+      <div *ngIf="filteredItems.length === 0" class="data-view__state">
+        {{ hasActiveQuery ? noResultsMessage : emptyMessage }}
       </div>
 
-      <div *ngIf="isLoading" class="data-view__state">
-        {{ loadingMessage }}
-      </div>
+      <ng-container *ngIf="filteredItems.length > 0">
+        <div *ngIf="selectedViewMode === 'grid'" class="data-view__grid">
+          <article
+            *ngFor="let item of processedItems"
+            class="data-view__card"
+            tabindex="0"
+            (click)="activateItem(item)"
+            (keydown.enter)="activateItem(item)"
+          >
+            <div class="data-view__card-top">
+              <span *ngIf="cardConfig.eyebrow" class="data-view__eyebrow">
+                {{ cardConfig.eyebrow(item) }}
+              </span>
+            </div>
 
-      <ng-container *ngIf="!isLoading">
-        <div *ngIf="filteredItems.length === 0" class="data-view__state">
-          {{ searchTerm.trim() ? noResultsMessage : emptyMessage }}
+            <h3>{{ cardConfig.title(item) }}</h3>
+            <p *ngIf="cardConfig.description">{{ cardConfig.description(item) }}</p>
+
+            <dl *ngIf="cardConfig.fields?.length" class="data-view__card-fields">
+              <div *ngFor="let field of cardConfig.fields">
+                <dt>{{ field.label }}</dt>
+                <dd>{{ field.value(item) }}</dd>
+              </div>
+            </dl>
+
+            <button
+              *ngIf="detailTemplate"
+              type="button"
+              class="data-view__detail-trigger"
+              (click)="openDetails(item, 'grid'); $event.stopPropagation()"
+            >
+              View more
+            </button>
+          </article>
         </div>
 
-        <ng-container *ngIf="filteredItems.length > 0">
-          <div *ngIf="selectedViewMode === 'grid'" class="data-view__grid">
-            <article
-              *ngFor="let item of processedItems"
-              class="data-view__card"
-              tabindex="0"
-              (click)="activateItem(item)"
-              (keydown.enter)="activateItem(item)"
-            >
-              <div class="data-view__card-top">
-                <span *ngIf="cardConfig.eyebrow" class="data-view__eyebrow">
-                  {{ cardConfig.eyebrow(item) }}
-                </span>
-              </div>
+        <div *ngIf="selectedViewMode === 'table'" class="data-view__table-wrap">
+          <table class="data-view__table">
+            <thead>
+              <tr>
+                <th *ngIf="detailTemplate" class="data-view__expander-header" scope="col">
+                  <span class="data-view__sr-only">Expand row</span>
+                </th>
+                <th *ngFor="let column of columns" scope="col">
+                  <button
+                    *ngIf="column.sortable; else staticHeader"
+                    type="button"
+                    class="data-view__sort-button"
+                    (click)="toggleSort(column)"
+                  >
+                    <span>{{ column.header }}</span>
+                    <span class="data-view__sort-indicator">
+                      {{ getSortIndicator(column) }}
+                    </span>
+                  </button>
 
-              <h3>{{ cardConfig.title(item) }}</h3>
-              <p *ngIf="cardConfig.description">{{ cardConfig.description(item) }}</p>
-
-              <dl *ngIf="cardConfig.fields?.length" class="data-view__card-fields">
-                <div *ngFor="let field of cardConfig.fields">
-                  <dt>{{ field.label }}</dt>
-                  <dd>{{ field.value(item) }}</dd>
-                </div>
-              </dl>
-
-              <button
-                *ngIf="detailTemplate"
-                type="button"
-                class="data-view__detail-trigger"
-                (click)="openDetails(item, 'grid'); $event.stopPropagation()"
-              >
-                View more
-              </button>
-            </article>
-          </div>
-
-          <div *ngIf="selectedViewMode === 'table'" class="data-view__table-wrap">
-            <table class="data-view__table">
-              <thead>
-                <tr>
-                  <th *ngIf="detailTemplate" class="data-view__expander-header" scope="col">
-                    <span class="data-view__sr-only">Expand row</span>
-                  </th>
-                  <th *ngFor="let column of columns" scope="col">
+                  <ng-template #staticHeader>{{ column.header }}</ng-template>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let item of processedItems">
+                <tr
+                  tabindex="0"
+                  (click)="activateItem(item)"
+                  (keydown.enter)="activateItem(item)"
+                >
+                  <td *ngIf="detailTemplate" class="data-view__expander-cell">
                     <button
-                      *ngIf="column.sortable; else staticHeader"
                       type="button"
-                      class="data-view__sort-button"
-                      (click)="toggleSort(column)"
+                      class="data-view__expander-button"
+                      [attr.aria-label]="expandedItem === item ? 'Collapse row details' : 'Expand row details'"
+                      (click)="toggleInlineDetails(item); $event.stopPropagation()"
                     >
-                      <span>{{ column.header }}</span>
-                      <span class="data-view__sort-indicator">
-                        {{ getSortIndicator(column) }}
-                      </span>
+                      {{ expandedItem === item ? '▾' : '▸' }}
                     </button>
-
-                    <ng-template #staticHeader>{{ column.header }}</ng-template>
-                  </th>
+                  </td>
+                  <td *ngFor="let column of columns">
+                    {{ formatColumnValue(column.value(item)) }}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                <ng-container *ngFor="let item of processedItems">
-                  <tr
-                    tabindex="0"
-                    (click)="activateItem(item)"
-                    (keydown.enter)="activateItem(item)"
-                  >
-                    <td *ngIf="detailTemplate" class="data-view__expander-cell">
-                      <button
-                        type="button"
-                        class="data-view__expander-button"
-                        [attr.aria-label]="expandedItem === item ? 'Collapse row details' : 'Expand row details'"
-                        (click)="toggleInlineDetails(item); $event.stopPropagation()"
-                      >
-                        {{ expandedItem === item ? '▾' : '▸' }}
-                      </button>
-                    </td>
-                    <td *ngFor="let column of columns">{{ column.value(item) }}</td>
-                  </tr>
-                  <tr
-                    *ngIf="detailTemplate && expandedItem === item"
-                    class="data-view__detail-row"
-                  >
-                    <td [attr.colspan]="columns.length + 1">
-                      <div class="data-view__detail-panel">
-                        <ng-container
-                          *ngTemplateOutlet="detailTemplate; context: getDetailContext(item, 'table')"
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                </ng-container>
-              </tbody>
-            </table>
-          </div>
-        </ng-container>
-      </ng-container>
+                <tr
+                  *ngIf="detailTemplate && expandedItem === item"
+                  class="data-view__detail-row"
+                >
+                  <td [attr.colspan]="columns.length + 1">
+                    <div class="data-view__detail-panel">
+                      <ng-container
+                        *ngTemplateOutlet="detailTemplate; context: getDetailContext(item, 'table')"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
 
-      <div
-        *ngIf="detailTemplate && detailModalItem"
-        class="data-view__modal-backdrop"
-        (click)="closeDetails()"
-      >
-        <section
-          class="data-view__modal"
-          (click)="$event.stopPropagation()"
+        <div
+          *ngIf="isPaginationEnabled"
+          class="data-view__pagination"
+          aria-label="Pagination"
         >
-          <div class="data-view__modal-header">
-            <h3>Record detail</h3>
+          <div class="data-view__pagination-report">
+            <p class="data-view__pagination-summary">
+              Showing {{ pageStartItem }}-{{ pageEndItem }} out of {{ filteredItems.length }}
+            </p>
+          </div>
+
+          <div class="data-view__pagination-controls">
             <button
               type="button"
-              class="data-view__modal-close"
-              (click)="closeDetails()"
+              class="data-view__pagination-button data-view__pagination-button--fast"
+              [disabled]="isFirstPage"
+              [attr.aria-label]="'Move backward ' + fastStep + ' pages'"
+              title="Fast backward"
+              (click)="movePage(-fastStep)"
             >
-              Close
+              &lt;&lt;
+            </button>
+            <button
+              type="button"
+              class="data-view__pagination-button data-view__pagination-button--text"
+              [disabled]="isFirstPage"
+              aria-label="Previous page"
+              title="Previous page"
+              (click)="movePage(-1)"
+            >
+              <span aria-hidden="true">&lt;</span>
+              Back
+            </button>
+
+            <div class="data-view__pagination-pages" aria-label="Pages">
+              <button
+                *ngFor="let pageItem of visiblePageItems; trackBy: trackPageItem"
+                type="button"
+                class="data-view__pagination-page"
+                [class.data-view__pagination-page--active]="pageItem === currentPage"
+                [disabled]="pageItem === 'ellipsis'"
+                [attr.aria-current]="pageItem === currentPage ? 'page' : null"
+                [attr.aria-label]="pageItem === 'ellipsis' ? 'More pages' : 'Go to page ' + pageItem"
+                (click)="handlePageItemClick(pageItem)"
+              >
+                {{ getPageItemLabel(pageItem) }}
+              </button>
+            </div>
+
+            <button
+              type="button"
+              class="data-view__pagination-button data-view__pagination-button--text"
+              [disabled]="isLastPage"
+              aria-label="Next page"
+              title="Next page"
+              (click)="movePage(1)"
+            >
+              Next
+              <span aria-hidden="true">&gt;</span>
+            </button>
+            <button
+              type="button"
+              class="data-view__pagination-button data-view__pagination-button--fast"
+              [disabled]="isLastPage"
+              [attr.aria-label]="'Move forward ' + fastStep + ' pages'"
+              title="Fast forward"
+              (click)="movePage(fastStep)"
+            >
+              &gt;&gt;
+            </button>
+
+            <label class="data-view__pagination-field data-view__pagination-field--page">
+              <span>Go to</span>
+              <input
+                #pageInput
+                type="number"
+                min="1"
+                [max]="pageCount"
+                [value]="currentPage"
+                (input)="handlePageInputChange(pageInput.value, pageInput)"
+                class="data-view__pagination-page-input"
+                placeholder="e.g 12"
+              />
+            </label>
+          </div>
+        </div>
+      </ng-container>
+    </ng-container>
+
+    <div
+      *ngIf="isFilterModalOpen"
+      class="data-view__modal-backdrop"
+      (click)="closeFilterModal()"
+    >
+      <section
+        class="data-view__modal data-view__modal--filters"
+        aria-modal="true"
+        role="dialog"
+        aria-labelledby="data-view-filter-title"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="data-view__modal-header">
+          <div>
+            <h3 id="data-view-filter-title">Filters</h3>
+            <p class="data-view__modal-subtitle">
+              {{ activeFilterCount }} active
+            </p>
+          </div>
+          <button
+            type="button"
+            class="data-view__modal-close"
+            aria-label="Close filters"
+            (click)="closeFilterModal()"
+          >
+            Close
+          </button>
+        </div>
+
+        <div class="data-view__filter-logic" aria-label="Filter match behavior">
+          <span>Match</span>
+          <button
+            type="button"
+            [class.data-view__filter-logic-option--active]="filterLogic === 'and'"
+            (click)="handleFilterLogicChange('and')"
+          >
+            All filters
+          </button>
+          <button
+            type="button"
+            [class.data-view__filter-logic-option--active]="filterLogic === 'or'"
+            (click)="handleFilterLogicChange('or')"
+          >
+            Any filter
+          </button>
+        </div>
+
+        <div class="data-view__filters">
+          <div class="data-view__filter-head" aria-hidden="true">
+            <span>Column</span>
+            <span>Expression</span>
+            <span>Value</span>
+            <span>Action</span>
+          </div>
+
+          <div
+            *ngFor="let filter of activeFilters"
+            class="data-view__filter-row data-view__filter-row--active"
+          >
+            <ng-container *ngIf="editingFilterId === filter.id; else readonlyFilter">
+              <span>{{ getColumnHeader(filter.columnKey) }}</span>
+
+              <label>
+                <span class="data-view__sr-only">Filter expression</span>
+                <select
+                  [ngModel]="editFilterDraft.operator ?? ''"
+                  (ngModelChange)="handleEditOperatorChange($event)"
+                >
+                  <option
+                    *ngFor="let operator of editOperatorOptions"
+                    [value]="operator.value"
+                  >
+                    {{ operator.label }}
+                  </option>
+                </select>
+              </label>
+
+              <label>
+                <span class="data-view__sr-only">Filter value</span>
+
+                <ng-container [ngSwitch]="editControlType">
+                  <ng-container *ngSwitchCase="'select'">
+                    <select
+                      *ngIf="isEditMultiSelect; else editSingleSelectFilter"
+                      multiple
+                      [ngModel]="editFilterDraft.value"
+                      (ngModelChange)="handleEditValueChange($event)"
+                    >
+                      <option
+                        *ngFor="let option of editOptions"
+                        [ngValue]="option.value"
+                      >
+                        {{ option.label }}
+                      </option>
+                    </select>
+
+                    <ng-template #editSingleSelectFilter>
+                      <select
+                        [ngModel]="editFilterDraft.value"
+                        (ngModelChange)="handleEditValueChange($event)"
+                      >
+                        <option
+                          *ngFor="let option of editOptions"
+                          [ngValue]="option.value"
+                        >
+                          {{ option.label }}
+                        </option>
+                      </select>
+                    </ng-template>
+                  </ng-container>
+
+                  <input
+                    *ngSwitchDefault
+                    [type]="getInputType(editValueType)"
+                    [ngModel]="editFilterDraft.value"
+                    (ngModelChange)="handleEditValueChange($event)"
+                    placeholder="Value"
+                  />
+                </ng-container>
+              </label>
+
+              <button
+                type="button"
+                class="data-view__filter-save"
+                title="Save filter"
+                aria-label="Save filter"
+                (click)="saveFilterEdit()"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path
+                    d="M9.2 16.6 4.9 12.3l1.4-1.4 2.9 2.9 8.5-8.5 1.4 1.4-9.9 9.9Z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </button>
+            </ng-container>
+
+            <ng-template #readonlyFilter>
+              <span>{{ getColumnHeader(filter.columnKey) }}</span>
+              <span>{{ getOperatorLabel(filter.operator) }}</span>
+              <span>{{ formatFilterValue(filter.value) }}</span>
+              <div class="data-view__filter-actions">
+                <button
+                  type="button"
+                  class="data-view__filter-edit"
+                  title="Edit filter"
+                  [attr.aria-label]="'Edit filter ' + getFilterSummary(filter)"
+                  (click)="startFilterEdit(filter)"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path
+                      d="M5 16.2V19h2.8l8.3-8.3-2.8-2.8L5 16.2Zm12.9-7.3-2.8-2.8 1.4-1.4c.4-.4 1-.4 1.4 0l1.4 1.4c.4.4.4 1 0 1.4l-1.4 1.4Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="data-view__filter-action"
+                  title="Remove filter"
+                  [attr.aria-label]="'Remove filter ' + getFilterSummary(filter)"
+                  (click)="removeFilter(filter.id)"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path
+                      d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-1 6h2v9h1V9h2v9h1V9h2v11H8V9Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </ng-template>
+          </div>
+
+          <p
+            *ngIf="editFilterDraft.error"
+            class="data-view__filter-error"
+            role="alert"
+          >
+            {{ editFilterDraft.error }}
+          </p>
+
+          <div
+            *ngIf="!editingFilterId"
+            class="data-view__filter-row data-view__filter-row--draft"
+          >
+            <label>
+              <span class="data-view__sr-only">Filter column</span>
+              <select
+                [ngModel]="filterDraft.columnKey ?? ''"
+                (ngModelChange)="handleDraftColumnChange($event)"
+              >
+                <option value="">Column</option>
+                <option
+                  *ngFor="let column of filterableColumns"
+                  [value]="column.key"
+                >
+                  {{ column.header }}
+                </option>
+              </select>
+            </label>
+
+            <label>
+              <span class="data-view__sr-only">Filter expression</span>
+              <select
+                [ngModel]="filterDraft.operator ?? ''"
+                (ngModelChange)="handleDraftOperatorChange($event)"
+                [disabled]="!selectedDraftColumn"
+              >
+                <option value="">Expression</option>
+                <option
+                  *ngFor="let operator of draftOperatorOptions"
+                  [value]="operator.value"
+                >
+                  {{ operator.label }}
+                </option>
+              </select>
+            </label>
+
+            <label>
+              <span class="data-view__sr-only">Filter value</span>
+
+              <ng-container [ngSwitch]="draftControlType">
+                <ng-container *ngSwitchCase="'select'">
+                  <select
+                    *ngIf="isDraftMultiSelect; else singleSelectFilter"
+                    multiple
+                    [ngModel]="filterDraft.value"
+                    (ngModelChange)="handleDraftValueChange($event)"
+                    [disabled]="!selectedDraftColumn"
+                  >
+                    <option
+                      *ngFor="let option of draftOptions"
+                      [ngValue]="option.value"
+                    >
+                      {{ option.label }}
+                    </option>
+                  </select>
+
+                  <ng-template #singleSelectFilter>
+                    <select
+                      [ngModel]="filterDraft.value"
+                      (ngModelChange)="handleDraftValueChange($event)"
+                      [disabled]="!selectedDraftColumn"
+                    >
+                      <option [ngValue]="undefined">
+                        Value
+                      </option>
+                      <option
+                        *ngFor="let option of draftOptions"
+                        [ngValue]="option.value"
+                      >
+                        {{ option.label }}
+                      </option>
+                    </select>
+                  </ng-template>
+                </ng-container>
+
+                <input
+                  *ngSwitchDefault
+                  [type]="getInputType(draftValueType)"
+                  [ngModel]="filterDraft.value"
+                  (ngModelChange)="handleDraftValueChange($event)"
+                  [disabled]="!selectedDraftColumn"
+                  placeholder="Value"
+                />
+              </ng-container>
+            </label>
+
+            <button
+              type="button"
+              class="data-view__filter-add"
+              title="Add filter"
+              aria-label="Add filter"
+              (click)="addDraftFilter()"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path
+                  d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z"
+                  fill="currentColor"
+                />
+              </svg>
             </button>
           </div>
 
-          <ng-container
-            *ngTemplateOutlet="detailTemplate; context: getDetailContext(detailModalItem, 'grid')"
-          />
-        </section>
-      </div>
-    </section>
+          <p
+            *ngIf="filterDraft.error"
+            class="data-view__filter-error"
+            role="alert"
+          >
+            {{ filterDraft.error }}
+          </p>
+        </div>
+
+        <div class="data-view__filter-footer">
+          <button
+            type="button"
+            class="data-view__filter-footer-button data-view__filter-footer-button--secondary"
+            [disabled]="activeFilterCount === 0"
+            (click)="clearAllFilters()"
+          >
+            Clear All
+          </button>
+          <button
+            type="button"
+            class="data-view__filter-footer-button data-view__filter-footer-button--primary"
+            (click)="closeFilterModal()"
+          >
+            Close
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <div
+      *ngIf="detailTemplate && detailModalItem"
+      class="data-view__modal-backdrop"
+      (click)="closeDetails()"
+    >
+      <section
+        class="data-view__modal"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="data-view__modal-header">
+          <h3>Record detail</h3>
+          <button
+            type="button"
+            class="data-view__modal-close"
+            (click)="closeDetails()"
+          >
+            Close
+          </button>
+        </div>
+
+        <ng-container
+          *ngTemplateOutlet="detailTemplate; context: getDetailContext(detailModalItem, 'grid')"
+        />
+      </section>
+    </div>
+  </ng-container>
+</section>
